@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { spawn } from 'child_process'
-import path from 'path'
+
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "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"
+const GROQ_MODEL = "llama3-8b-8192"
 
 export async function POST(request: Request) {
   try {
-    const { text, sourceLang, targetLang } = await request.json()
+    const { text, sourceLang = 'English', targetLang = 'Spanish' } = await request.json()
 
     if (!text) {
       return NextResponse.json(
@@ -13,57 +14,54 @@ export async function POST(request: Request) {
       )
     }
 
-    return new Promise((resolve) => {
-      const scriptPath = path.join(process.cwd(), 'LangTranslateusignGroqApi.py')
-      const pythonProcess = spawn('python', [
-        scriptPath,
-        '--text', text,
-        '--source', sourceLang || 'English',
-        '--target', targetLang || 'Spanish'
-      ])
-
-      let result = ''
-      let error = ''
-
-      pythonProcess.stdout.on('data', (data) => {
-        result += data.toString()
-      })
-
-      pythonProcess.stderr.on('data', (data) => {
-        error += data.toString()
-      })
-
-      pythonProcess.on('error', (err) => {
-        resolve(NextResponse.json(
-          { error: `Failed to start Python process: ${err.message}` },
-          { status: 500 }
-        ))
-      })
-
-      pythonProcess.on('close', (code) => {
-        if (code !== 0 || error) {
-          resolve(NextResponse.json(
-            { error: error || 'Translation failed' },
-            { status: 500 }
-          ))
-        } else {
-          const translation = result.trim()
-          if (!translation) {
-            resolve(NextResponse.json(
-              { error: 'No translation received' },
-              { status: 500 }
-            ))
-          } else {
-            resolve(NextResponse.json({ translation }))
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a translator. Translate from ${sourceLang} to ${targetLang}. Only provide the translation.`
+          },
+          {
+            role: 'user',
+            content: text
           }
-        }
+        ],
+        temperature: 0.2,
+        max_tokens: 300
       })
     })
+
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Groq API error:', error)
+      return NextResponse.json(
+        { error: 'Translation service error' },
+        { status: response.status }
+      )
+    }
+
+    const result = await response.json()
+    const translation = result.choices[0].message.content.trim()
+
+    if (!translation) {
+      return NextResponse.json(
+        { error: 'No translation received' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ translation })
   } catch (error) {
     console.error('Translation error:', error)
     return NextResponse.json(
-      { error: 'Invalid request' },
-      { status: 400 }
+      { error: 'Translation service error' },
+      { status: 500 }
     )
   }
 }
