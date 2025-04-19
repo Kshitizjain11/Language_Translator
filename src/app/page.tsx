@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react'
 import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun } from 'react-icons/fa'
 import { motion } from 'framer-motion'
+import CountryFlagInfo from './CountryFlagInfo'
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -126,6 +127,7 @@ export default function Home() {
                   </option>
                 ))}
               </select>
+              <CountryFlagInfo flag={languages.find(l => l.code === sourceLang)?.flag || ''} name={languages.find(l => l.code === sourceLang)?.name || ''} />
               <button
                 onClick={startListening}
                 className={`ml-2 btn ${isListening ? 'bg-red-500' : 'bg-blue-500'} text-white`}
@@ -156,6 +158,7 @@ export default function Home() {
                   </option>
                 ))}
               </select>
+              <CountryFlagInfo flag={languages.find(l => l.code === targetLang)?.flag || ''} name={languages.find(l => l.code === targetLang)?.name || ''} />
               <button
                 onClick={() => speakText(outputText)}
                 disabled={!outputText}

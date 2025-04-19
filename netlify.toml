@@ -1,0 +1,17 @@
+# Netlify configuration for Language Translator app
+[build]
+  publish = "src"
+  command = ""
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect all requests to index.html (for SPAs)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
