@@ -1,0 +1,6 @@
+@echo off
+echo Starting Language Translator Application...
+cd %~dp0
+echo Running npm with execution policy bypass...
+powershell -ExecutionPolicy Bypass -Command "cd '%~dp0'; npm run dev"
+pause 
