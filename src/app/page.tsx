@@ -3,8 +3,6 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react'
 import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun } from 'react-icons/fa'
 import { motion } from 'framer-motion'
-
-import CountryFlagInfo from './CountryFlagInfo'
 import Link from 'next/link'
 import TranslationHistoryPanel from '@/components/learning/TranslationHistoryPanel';
 import AuthGuard from '@/components/AuthGuard';
@@ -219,63 +217,6 @@ export default function Home() {
                 </div>
               </div>
 
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Input Section */}
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <select
-                value={sourceLang}
-                onChange={(e) => setSourceLang(e.target.value)}
-                className="input-field"
-              >
-                {languages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.flag} {lang.name}
-                  </option>
-                ))}
-              </select>
-              <CountryFlagInfo flag={languages.find(l => l.code === sourceLang)?.flag || ''} name={languages.find(l => l.code === sourceLang)?.name || ''} />
-              <button
-                onClick={startListening}
-                className={`ml-2 btn ${isListening ? 'bg-red-500' : 'bg-blue-500'} text-white`}
-              >
-                <FaMicrophone />
-              </button>
-            </div>
-            
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Enter text to translate..."
-              className="input-field h-48 resize-none"
-            />
-          </div>
-
-          {/* Output Section */}
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <select
-                value={targetLang}
-                onChange={(e) => setTargetLang(e.target.value)}
-                className="input-field"
-              >
-                {languages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.flag} {lang.name}
-                  </option>
-                ))}
-              </select>
-              <CountryFlagInfo flag={languages.find(l => l.code === targetLang)?.flag || ''} name={languages.find(l => l.code === targetLang)?.name || ''} />
-              <button
-                onClick={() => speakText(outputText)}
-                disabled={!outputText}
-                className="ml-2 btn bg-blue-500 text-white disabled:opacity-50"
-              >
-                <FaVolumeUp />
-              </button>
-            </div>
-=======
               {activeFeature === 'translator' && (
                 <div className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
@@ -331,7 +272,6 @@ export default function Home() {
                           <FaVolumeUp />
                         </button>
                       </div>
-
 
                       <div className="relative">
                         <textarea
