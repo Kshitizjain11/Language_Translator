@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaSpinner, FaCopy, FaExchangeAlt, FaSlidersH } from 'react-icons/fa';
+import { FaSpinner, FaCopy, FaExchangeAlt, FaSlidersH, FaDownload } from 'react-icons/fa';
 
 export default function Paraphraser() {
   const [text, setText] = useState('');
@@ -10,6 +10,7 @@ export default function Paraphraser() {
   const [mode, setMode] = useState<'standard' | 'fluency' | 'creative' | 'academic'>('standard');
   const [synonymLevel, setSynonymLevel] = useState(50); // 0-100
   const [showSettings, setShowSettings] = useState(false);
+  const [style, setStyle] = useState<'professional' | 'casual' | 'creative'>('professional');
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
@@ -62,44 +63,42 @@ export default function Paraphraser() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white p-4 shadow-sm">
-        <h2 className="text-xl font-semibold">Paraphraser</h2>
-        <p className="text-gray-600 text-sm">Rewrite text in different styles while preserving meaning</p>
+      <div className="bg-gray-800 p-4 shadow-sm">
+        <h2 className="text-xl font-semibold text-white">Paraphraser</h2>
+        <p className="text-gray-300 text-sm">Rewrite text in different styles while preserving meaning</p>
       </div>
       
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4">
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Original Text</label>
-            <div className="text-sm text-gray-500">{text.trim().split(/\s+/).filter(Boolean).length} words</div>
+            <label className="font-medium text-white">Original Text</label>
+            <div className="text-sm text-gray-300">{text.trim().split(/\s+/).filter(Boolean).length} words</div>
           </div>
           <textarea
             value={text}
             onChange={handleTextChange}
             placeholder="Enter or paste your text here to paraphrase..."
-            className="flex-1 border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-gray-700 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-white placeholder-gray-400"
           />
         </div>
         
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Paraphrased Text</label>
+            <label className="font-medium text-white">Paraphrased Text</label>
             <div className="flex items-center space-x-2">
-              <div className="text-sm text-gray-500">
-                {paraphrased.trim().split(/\s+/).filter(Boolean).length} words
-              </div>
+              <div className="text-sm text-gray-300">{paraphrased.trim().split(/\s+/).filter(Boolean).length} words</div>
               {paraphrased && (
                 <>
                   <button 
                     onClick={copyToClipboard}
-                    className="text-gray-500 hover:text-blue-600"
+                    className="text-gray-300 hover:text-blue-400"
                     title="Copy to clipboard"
                   >
                     <FaCopy />
                   </button>
                   <button 
                     onClick={swapTexts}
-                    className="text-gray-500 hover:text-blue-600"
+                    className="text-gray-300 hover:text-blue-400"
                     title="Use as input"
                   >
                     <FaExchangeAlt />
@@ -108,9 +107,9 @@ export default function Paraphraser() {
               )}
             </div>
           </div>
-          <div className="flex-1 border border-gray-300 rounded p-3 overflow-auto bg-white">
+          <div className="flex-1 border border-gray-700 rounded p-3 overflow-auto bg-gray-800">
             {paraphrased ? (
-              <div>{paraphrased}</div>
+              <div className="text-white">{paraphrased}</div>
             ) : (
               <div className="text-gray-400 h-full flex items-center justify-center">
                 {loading ? 'Paraphrasing...' : 'Paraphrased text will appear here'}
@@ -120,11 +119,11 @@ export default function Paraphraser() {
         </div>
       </div>
       
-      <div className="bg-gray-50 p-4 border-t">
+      <div className="bg-gray-800 p-4 border-t border-gray-700">
         <div className="flex justify-between items-center">
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center text-gray-700 hover:text-blue-600"
+            className="flex items-center text-gray-300 hover:text-blue-400"
           >
             <FaSlidersH className="mr-2" />
             {showSettings ? 'Hide Settings' : 'Show Settings'}
@@ -133,7 +132,7 @@ export default function Paraphraser() {
           <button 
             onClick={paraphraseText}
             disabled={!text.trim() || loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 flex items-center"
+            className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 flex items-center hover:bg-blue-700"
           >
             {loading && <FaSpinner className="animate-spin mr-2" />}
             Paraphrase
@@ -141,41 +140,35 @@ export default function Paraphraser() {
         </div>
         
         {showSettings && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Paraphrasing Mode</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <label className="block text-sm font-medium text-white mb-2">Style</label>
+              <div className="flex border border-gray-700 rounded overflow-hidden">
                 <button
-                  onClick={() => setMode('standard')}
-                  className={`py-2 px-3 rounded ${mode === 'standard' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border'}`}
+                  onClick={() => setStyle('professional')}
+                  className={`flex-1 py-2 ${style === 'professional' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
-                  Standard
+                  Professional
                 </button>
                 <button
-                  onClick={() => setMode('fluency')}
-                  className={`py-2 px-3 rounded ${mode === 'fluency' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border'}`}
+                  onClick={() => setStyle('casual')}
+                  className={`flex-1 py-2 ${style === 'casual' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
-                  Fluency
+                  Casual
                 </button>
                 <button
-                  onClick={() => setMode('creative')}
-                  className={`py-2 px-3 rounded ${mode === 'creative' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border'}`}
+                  onClick={() => setStyle('creative')}
+                  className={`flex-1 py-2 ${style === 'creative' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Creative
-                </button>
-                <button
-                  onClick={() => setMode('academic')}
-                  className={`py-2 px-3 rounded ${mode === 'academic' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border'}`}
-                >
-                  Academic
                 </button>
               </div>
             </div>
             
             <div>
               <div className="flex justify-between">
-                <label className="block text-sm font-medium">Synonym Level</label>
-                <span className="text-sm text-gray-500">{synonymLevel}%</span>
+                <label className="block text-sm font-medium text-white">Synonym Level</label>
+                <span className="text-sm text-gray-300">{synonymLevel}%</span>
               </div>
               <input
                 type="range"
@@ -183,9 +176,9 @@ export default function Paraphraser() {
                 max="100"
                 value={synonymLevel}
                 onChange={(e) => setSynonymLevel(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2"
+                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>Less Changes</span>
                 <span>More Changes</span>
               </div>

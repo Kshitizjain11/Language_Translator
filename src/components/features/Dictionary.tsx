@@ -1,277 +1,211 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaVolumeUp, FaBookmark, FaStar } from 'react-icons/fa';
+import { FaSearch, FaVolumeUp, FaSpinner, FaStar, FaRegStar, FaSlidersH } from 'react-icons/fa';
 
-interface WordDefinition {
+interface DictionaryEntry {
   word: string;
   phonetic: string;
-  partOfSpeech: string;
-  definition: string;
-  example?: string;
-  synonyms: string[];
-  antonyms: string[];
+  meanings: {
+    partOfSpeech: string;
+    definitions: {
+      definition: string;
+      example?: string;
+      synonyms: string[];
+      antonyms: string[];
+    }[];
+  }[];
+  audioUrl?: string;
 }
 
 export default function Dictionary() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [word, setWord] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<WordDefinition | null>(null);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [entry, setEntry] = useState<DictionaryEntry | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sourceLang, setSourceLang] = useState<'en' | 'es' | 'fr'>('en');
 
-  // Load history and favorites from localStorage on component mount
-  useEffect(() => {
-    const savedSearches = localStorage.getItem('dictionaryRecentSearches');
-    const savedFavorites = localStorage.getItem('dictionaryFavorites');
-    
-    if (savedSearches) {
-      setRecentSearches(JSON.parse(savedSearches));
-    }
-    
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites));
-    }
-  }, []);
-
-  // Save history and favorites to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('dictionaryRecentSearches', JSON.stringify(recentSearches));
-  }, [recentSearches]);
-
-  useEffect(() => {
-    localStorage.setItem('dictionaryFavorites', JSON.stringify(favorites));
-  }, [favorites]);
-
-  const searchWord = async () => {
-    if (!searchTerm.trim()) return;
+  const lookupWord = async () => {
+    if (!word.trim()) return;
     
     setLoading(true);
-    
     try {
-      const response = await fetch(`/api/dictionary?word=${encodeURIComponent(searchTerm.trim())}`);
-      const data = await response.json();
+      const response = await fetch('/api/dictionary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          word: word.trim().toLowerCase(),
+          sourceLang
+        })
+      });
       
-      if (response.ok) {
-        setResult(data);
-        
-        // Add to recent searches if not already there
-        if (!recentSearches.includes(searchTerm.toLowerCase())) {
-          setRecentSearches(prev => [searchTerm.toLowerCase(), ...prev].slice(0, 10));
-        }
-      } else if (response.status === 404) {
-        // Word not found
-        setResult(null);
-        // Show suggestions if available
-        if (data.suggestions && data.suggestions.length > 0) {
-          setRecentSearches(data.suggestions);
-        }
-      } else {
-        console.error('Error searching for word:', data.error);
+      if (!response.ok) {
+        throw new Error('Dictionary lookup failed');
       }
+      
+      const data = await response.json();
+      setEntry(data);
     } catch (error) {
-      console.error('Error searching for word:', error);
+      console.error('Error looking up word:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const speakWord = (word: string) => {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const toggleFavorite = (word: string) => {
-    if (favorites.includes(word)) {
-      setFavorites(favorites.filter(w => w !== word));
-    } else {
-      setFavorites([...favorites, word]);
+  const playAudio = () => {
+    if (entry?.audioUrl) {
+      const audio = new Audio(entry.audioUrl);
+      audio.play();
     }
   };
 
-  const clearHistory = () => {
-    setRecentSearches([]);
-  };
-
-  const clearFavorites = () => {
-    setFavorites([]);
+  const toggleFavorite = (word: string) => {
+    setFavorites(prev => 
+      prev.includes(word)
+        ? prev.filter(w => w !== word)
+        : [...prev, word]
+    );
   };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white p-4 shadow-sm">
-        <h2 className="text-xl font-semibold">Dictionary</h2>
-        <p className="text-gray-600 text-sm">Look up word definitions, synonyms, and antonyms</p>
+      <div className="bg-gray-800 p-4 shadow-sm">
+        <h2 className="text-xl font-semibold text-white">Dictionary</h2>
+        <p className="text-gray-300 text-sm">Look up word definitions, pronunciations, and examples</p>
       </div>
       
-      <div className="p-4">
-        <div className="relative">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchWord()}
-            placeholder="Enter a word..."
-            className="w-full border border-gray-300 rounded-lg py-2 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button 
-            onClick={searchWord}
-            disabled={!searchTerm.trim() || loading}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600"
-          >
-            <FaSearch />
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-auto p-4">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        ) : result ? (
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-2xl font-bold">{result.word}</h3>
-                <div className="text-gray-600 flex items-center">
-                  {result.phonetic} 
-                  <button 
-                    onClick={() => speakWord(result.word)}
-                    className="ml-2 text-blue-500 hover:text-blue-700"
-                  >
-                    <FaVolumeUp />
-                  </button>
-                </div>
-              </div>
-              <button 
-                onClick={() => toggleFavorite(result.word)}
-                className={`${favorites.includes(result.word) ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-500`}
+      <div className="flex-1 p-4">
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && lookupWord()}
+                placeholder="Enter a word to look up..."
+                className="w-full pl-4 pr-10 py-2 border border-gray-700 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={lookupWord}
+                disabled={!word.trim() || loading}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-blue-400 disabled:opacity-50"
               >
-                <FaStar size={20} />
+                {loading ? <FaSpinner className="animate-spin" /> : <FaSearch />}
               </button>
             </div>
-            
-            <div className="mt-4">
-              <div className="text-sm font-medium text-blue-600 uppercase">{result.partOfSpeech}</div>
-              <div className="mt-1">
-                <div className="font-medium">Definition:</div>
-                <p className="text-gray-700">{result.definition}</p>
-              </div>
-              
-              {result.example && (
-                <div className="mt-2">
-                  <div className="font-medium">Example:</div>
-                  <p className="text-gray-700 italic">"{result.example}"</p>
-                </div>
-              )}
-              
-              {result.synonyms.length > 0 && (
-                <div className="mt-2">
-                  <div className="font-medium">Synonyms:</div>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {result.synonyms.map(synonym => (
-                      <span 
-                        key={synonym} 
-                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm cursor-pointer hover:bg-blue-200"
-                        onClick={() => {
-                          setSearchTerm(synonym);
-                          searchWord();
-                        }}
-                      >
-                        {synonym}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {result.antonyms.length > 0 && (
-                <div className="mt-2">
-                  <div className="font-medium">Antonyms:</div>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {result.antonyms.map(antonym => (
-                      <span 
-                        key={antonym} 
-                        className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm cursor-pointer hover:bg-red-200"
-                        onClick={() => {
-                          setSearchTerm(antonym);
-                          searchWord();
-                        }}
-                      >
-                        {antonym}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+          </div>
+          
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="px-3 py-2 text-gray-300 hover:text-blue-400 border border-gray-700 rounded bg-gray-800"
+          >
+            <FaSlidersH />
+          </button>
+        </div>
+
+        {showSettings && (
+          <div className="mb-6 p-4 border border-gray-700 rounded bg-gray-800">
+            <label className="block text-sm font-medium text-white mb-2">Source Language</label>
+            <div className="flex border border-gray-700 rounded overflow-hidden">
+              <button
+                onClick={() => setSourceLang('en')}
+                className={`flex-1 py-2 ${sourceLang === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setSourceLang('es')}
+                className={`flex-1 py-2 ${sourceLang === 'es' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              >
+                Spanish
+              </button>
+              <button
+                onClick={() => setSourceLang('fr')}
+                className={`flex-1 py-2 ${sourceLang === 'fr' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              >
+                French
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="h-full flex flex-col">
-            {recentSearches.length > 0 && (
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium">Recent Searches</h3>
-                  <button 
-                    onClick={clearHistory}
-                    className="text-xs text-red-500 hover:text-red-700"
-                  >
-                    Clear History
-                  </button>
+        )}
+        
+        {entry && (
+          <div className="border border-gray-700 rounded bg-gray-800 overflow-hidden">
+            <div className="p-4 border-b border-gray-700">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl font-bold text-white">{entry.word}</h3>
+                    {entry.audioUrl && (
+                      <button
+                        onClick={playAudio}
+                        className="text-gray-300 hover:text-blue-400"
+                        title="Play pronunciation"
+                      >
+                        <FaVolumeUp />
+                      </button>
+                    )}
+                  </div>
+                  {entry.phonetic && (
+                    <div className="text-gray-400 mt-1">{entry.phonetic}</div>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {recentSearches.map(term => (
-                    <span 
-                      key={term} 
-                      className="bg-gray-100 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200"
-                      onClick={() => {
-                        setSearchTerm(term);
-                        searchWord();
-                      }}
-                    >
-                      {term}
-                    </span>
+                <button
+                  onClick={() => toggleFavorite(entry.word)}
+                  className="text-gray-300 hover:text-yellow-400"
+                  title={favorites.includes(entry.word) ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {favorites.includes(entry.word) ? <FaStar /> : <FaRegStar />}
+                </button>
+              </div>
+            </div>
+            
+            <div className="divide-y divide-gray-700">
+              {entry.meanings.map((meaning, index) => (
+                <div key={index} className="p-4">
+                  <div className="text-blue-400 font-medium mb-2">
+                    {meaning.partOfSpeech}
+                  </div>
+                  
+                  {meaning.definitions.map((def, i) => (
+                    <div key={i} className="mb-4 last:mb-0">
+                      <div className="text-white mb-2">{def.definition}</div>
+                      {def.example && (
+                        <div className="text-gray-400 pl-4 border-l-2 border-gray-700">
+                          "{def.example}"
+                        </div>
+                      )}
+                      {(def.synonyms.length > 0 || def.antonyms.length > 0) && (
+                        <div className="mt-2 text-sm">
+                          {def.synonyms.length > 0 && (
+                            <div className="text-gray-300">
+                              <span className="text-gray-400">Synonyms: </span>
+                              {def.synonyms.join(', ')}
+                            </div>
+                          )}
+                          {def.antonyms.length > 0 && (
+                            <div className="text-gray-300">
+                              <span className="text-gray-400">Antonyms: </span>
+                              {def.antonyms.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
-            
-            {favorites.length > 0 && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium">Favorites</h3>
-                  <button 
-                    onClick={clearFavorites}
-                    className="text-xs text-red-500 hover:text-red-700"
-                  >
-                    Clear Favorites
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {favorites.map(term => (
-                    <span 
-                      key={term} 
-                      className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-yellow-200 flex items-center"
-                      onClick={() => {
-                        setSearchTerm(term);
-                        searchWord();
-                      }}
-                    >
-                      <FaStar className="mr-1 text-yellow-500" size={12} />
-                      {term}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {recentSearches.length === 0 && favorites.length === 0 && (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                Search for a word to see its definition
-              </div>
-            )}
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {!entry && !loading && word && (
+          <div className="text-center py-12 border border-gray-700 rounded bg-gray-800">
+            <p className="text-gray-400">
+              No results found. Please try another word.
+            </p>
           </div>
         )}
       </div>

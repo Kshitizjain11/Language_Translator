@@ -1,39 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaCheck, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaCheck, FaExclamationTriangle, FaSpinner, FaArrowRight, FaSlidersH } from 'react-icons/fa';
 
 interface GrammarError {
-  id: string;
-  text: string;
-  startIndex: number;
-  endIndex: number;
-  type: 'spelling' | 'grammar' | 'punctuation' | 'style';
+  type: string;
+  message: string;
+  original: string;
   suggestion: string;
 }
 
 export default function GrammarCheck() {
   const [text, setText] = useState('');
-  const [errors, setErrors] = useState<GrammarError[]>([]);
   const [loading, setLoading] = useState(false);
-  const [correctedText, setCorrectedText] = useState('');
-  const [stats, setStats] = useState({ 
-    spellingErrors: 0, 
-    grammarErrors: 0, 
-    punctuationErrors: 0,
-    styleIssues: 0
-  });
+  const [corrections, setCorrections] = useState<GrammarError[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [checkLevel, setCheckLevel] = useState<'basic' | 'standard' | 'advanced'>('standard');
+  const [writingStyle, setWritingStyle] = useState<'general' | 'academic' | 'business'>('general');
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+  };
 
   const checkGrammar = async () => {
     if (!text.trim()) return;
     
     setLoading(true);
-    
     try {
-      const response = await fetch('/api/grammar', {
+      const response = await fetch('/api/grammar-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ 
+          text,
+          checkLevel,
+          writingStyle
+        })
       });
       
       if (!response.ok) {
@@ -41,9 +42,7 @@ export default function GrammarCheck() {
       }
       
       const data = await response.json();
-      setErrors(data.errors);
-      setStats(data.stats);
-      setCorrectedText(data.correctedText);
+      setCorrections(data.corrections);
     } catch (error) {
       console.error('Error checking grammar:', error);
     } finally {
@@ -51,159 +50,169 @@ export default function GrammarCheck() {
     }
   };
 
-  const applyCorrections = () => {
-    let result = text;
-    // Sort errors by their position from end to start to avoid index shifting
-    const sortedErrors = [...errors].sort((a, b) => b.startIndex - a.startIndex);
-    
-    for (const error of sortedErrors) {
-      result = 
-        result.substring(0, error.startIndex) + 
-        error.suggestion + 
-        result.substring(error.endIndex);
-    }
-    
-    setCorrectedText(result);
+  const applyCorrection = (index: number) => {
+    const correction = corrections[index];
+    const newText = text.replace(correction.original, correction.suggestion);
+    setText(newText);
+    setCorrections(corrections.filter((_, i) => i !== index));
   };
 
-  const highlightText = () => {
-    if (errors.length === 0) return text;
-    
-    let result = [];
-    let lastIndex = 0;
-    
-    // Sort errors by their start position
-    const sortedErrors = [...errors].sort((a, b) => a.startIndex - b.startIndex);
-    
-    for (const error of sortedErrors) {
-      if (error.startIndex > lastIndex) {
-        // Add text before the error
-        result.push(text.substring(lastIndex, error.startIndex));
-      }
-      
-      // Add highlighted error
-      const errorClass = `bg-${getErrorColor(error.type)}-100 border-b-2 border-${getErrorColor(error.type)}-400 rounded px-1`;
-      result.push(
-        <span key={error.id} className={errorClass} title={error.suggestion}>
-          {text.substring(error.startIndex, error.endIndex)}
-        </span>
-      );
-      
-      lastIndex = error.endIndex;
-    }
-    
-    // Add remaining text
-    if (lastIndex < text.length) {
-      result.push(text.substring(lastIndex));
-    }
-    
-    return result;
-  };
-  
-  const getErrorColor = (type: string): string => {
-    switch (type) {
-      case 'spelling': return 'red';
-      case 'grammar': return 'yellow';
-      case 'punctuation': return 'blue';
-      case 'style': return 'purple';
-      default: return 'gray';
-    }
+  const applyAllCorrections = () => {
+    let newText = text;
+    corrections.forEach(correction => {
+      newText = newText.replace(correction.original, correction.suggestion);
+    });
+    setText(newText);
+    setCorrections([]);
   };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white p-4 shadow-sm">
-        <h2 className="text-xl font-semibold">Grammar Check</h2>
-        <p className="text-gray-600 text-sm">Check your text for grammar, spelling, and style issues</p>
+      <div className="bg-gray-800 p-4 shadow-sm">
+        <h2 className="text-xl font-semibold text-white">Grammar Check</h2>
+        <p className="text-gray-300 text-sm">Check and correct grammar, spelling, and punctuation</p>
       </div>
       
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4">
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Your Text</label>
-            <button 
-              onClick={checkGrammar}
-              disabled={!text.trim() || loading}
-              className="bg-blue-600 text-white px-4 py-1 rounded text-sm disabled:opacity-50"
-            >
-              {loading ? <FaSpinner className="animate-spin inline mr-1" /> : 'Check Text'}
-            </button>
+            <label className="font-medium text-white">Text to Check</label>
+            <div className="text-sm text-gray-300">{text.trim().split(/\s+/).filter(Boolean).length} words</div>
           </div>
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Enter or paste your text here..."
-            className="flex-1 border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={handleTextChange}
+            placeholder="Enter or paste your text here to check grammar..."
+            className="flex-1 border border-gray-700 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-white placeholder-gray-400"
           />
         </div>
         
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Corrected Text</label>
-            <button 
-              onClick={applyCorrections}
-              disabled={errors.length === 0}
-              className="bg-green-600 text-white px-4 py-1 rounded text-sm disabled:opacity-50"
-            >
-              Apply All Corrections
-            </button>
+            <label className="font-medium text-white">Suggestions</label>
+            <div className="flex items-center space-x-2">
+              <div className="text-sm text-gray-300">{corrections.length} issues found</div>
+              {corrections.length > 0 && (
+                <button 
+                  onClick={applyAllCorrections}
+                  className="text-gray-300 hover:text-blue-400"
+                  title="Apply all corrections"
+                >
+                  <FaCheck />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex-1 border border-gray-300 rounded p-3 overflow-auto bg-white">
-            {correctedText ? (
-              <div>{correctedText}</div>
-            ) : errors.length > 0 ? (
-              <div>{highlightText()}</div>
+          <div className="flex-1 border border-gray-700 rounded p-3 overflow-auto bg-gray-800">
+            {loading ? (
+              <div className="h-full flex items-center justify-center text-gray-400">
+                <FaSpinner className="animate-spin mr-2" />
+                Checking grammar...
+              </div>
+            ) : corrections.length > 0 ? (
+              <div className="space-y-4">
+                {corrections.map((correction, index) => (
+                  <div key={index} className="p-3 rounded bg-gray-700 border border-gray-600">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="text-red-400">{correction.type}</div>
+                      <button
+                        onClick={() => applyCorrection(index)}
+                        className="text-gray-300 hover:text-blue-400"
+                        title="Apply correction"
+                      >
+                        <FaCheck className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-gray-300 mb-2">{correction.message}</p>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-red-400 line-through">{correction.original}</span>
+                      <FaArrowRight className="text-gray-400" />
+                      <span className="text-green-400">{correction.suggestion}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="text-gray-400 h-full flex items-center justify-center">
-                {loading ? 'Checking your text...' : 'Corrected text will appear here'}
+              <div className="h-full flex items-center justify-center text-gray-400">
+                {text ? 'No grammar issues found' : 'Enter text to check grammar'}
               </div>
             )}
           </div>
         </div>
       </div>
       
-      {errors.length > 0 && (
-        <div className="bg-gray-50 p-4 border-t">
-          <h3 className="font-medium mb-2">Issues Found</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-3 rounded shadow-sm border">
-              <div className="text-red-500 font-bold text-xl">{stats.spellingErrors}</div>
-              <div className="text-sm">Spelling</div>
-            </div>
-            <div className="bg-white p-3 rounded shadow-sm border">
-              <div className="text-yellow-500 font-bold text-xl">{stats.grammarErrors}</div>
-              <div className="text-sm">Grammar</div>
-            </div>
-            <div className="bg-white p-3 rounded shadow-sm border">
-              <div className="text-blue-500 font-bold text-xl">{stats.punctuationErrors}</div>
-              <div className="text-sm">Punctuation</div>
-            </div>
-            <div className="bg-white p-3 rounded shadow-sm border">
-              <div className="text-purple-500 font-bold text-xl">{stats.styleIssues}</div>
-              <div className="text-sm">Style</div>
-            </div>
-          </div>
+      <div className="bg-gray-800 p-4 border-t border-gray-700">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center text-gray-300 hover:text-blue-400"
+          >
+            <FaSlidersH className="mr-2" />
+            {showSettings ? 'Hide Settings' : 'Show Settings'}
+          </button>
           
-          <div className="mt-4">
-            <h3 className="font-medium mb-2">Suggestions</h3>
-            <ul className="bg-white rounded border divide-y">
-              {errors.map(error => (
-                <li key={error.id} className="p-3 flex justify-between items-center">
-                  <div>
-                    <span className={`inline-block w-2 h-2 rounded-full bg-${getErrorColor(error.type)}-500 mr-2`}></span>
-                    <span className="font-medium">{error.text}</span>
-                    <span className="text-gray-500 mx-2">→</span>
-                    <span className="text-green-600">{error.suggestion}</span>
-                  </div>
-                  <button className="text-blue-600 hover:text-blue-800">
-                    Apply
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <button 
+            onClick={checkGrammar}
+            disabled={!text.trim() || loading}
+            className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 flex items-center hover:bg-blue-700"
+          >
+            {loading && <FaSpinner className="animate-spin mr-2" />}
+            Check Grammar
+          </button>
         </div>
-      )}
+        
+        {showSettings && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Check Level</label>
+              <div className="flex border border-gray-700 rounded overflow-hidden">
+                <button
+                  onClick={() => setCheckLevel('basic')}
+                  className={`flex-1 py-2 ${checkLevel === 'basic' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  Basic
+                </button>
+                <button
+                  onClick={() => setCheckLevel('standard')}
+                  className={`flex-1 py-2 ${checkLevel === 'standard' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  Standard
+                </button>
+                <button
+                  onClick={() => setCheckLevel('advanced')}
+                  className={`flex-1 py-2 ${checkLevel === 'advanced' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  Advanced
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Writing Style</label>
+              <div className="flex border border-gray-700 rounded overflow-hidden">
+                <button
+                  onClick={() => setWritingStyle('general')}
+                  className={`flex-1 py-2 ${writingStyle === 'general' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  General
+                </button>
+                <button
+                  onClick={() => setWritingStyle('academic')}
+                  className={`flex-1 py-2 ${writingStyle === 'academic' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  Academic
+                </button>
+                <button
+                  onClick={() => setWritingStyle('business')}
+                  className={`flex-1 py-2 ${writingStyle === 'business' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                >
+                  Business
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
