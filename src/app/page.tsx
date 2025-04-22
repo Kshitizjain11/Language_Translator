@@ -13,6 +13,7 @@ import Summarizer from '@/components/features/Summarizer';
 import Paraphraser from '@/components/features/Paraphraser';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
+import LearningMode from '@/components/learning/LearningMode'
 
 interface Language {
   code: string;
@@ -594,6 +595,11 @@ export default function Home() {
             {activeFeature === 'dictionary' && <Dictionary />}
             {activeFeature === 'summarizer' && <Summarizer />}
             {activeFeature === 'paraphraser' && <Paraphraser />}
+            {activeFeature === 'learning' && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                <LearningMode />
+              </div>
+            )}
           </div>
         </div>
       </div>
