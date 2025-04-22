@@ -126,7 +126,7 @@ const languages: Language[] = [
   { code: 'ug', name: 'Uyghur', flag: '🇨🇳', display: '🇨🇳 Uyghur' },
   { code: 'uz', name: 'Uzbek', flag: '🇺🇿', display: '🇺🇿 Uzbek' },
   { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', display: '🇻🇳 Vietnamese' },
-  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷��󠁳󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
+  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬��󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
   { code: 'xh', name: 'Xhosa', flag: '🇿🇦', display: '🇿🇦 Xhosa' },
   { code: 'yi', name: 'Yiddish', flag: '🌍', display: '🌍 Yiddish' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬', display: '🇳🇬 Yoruba' },
@@ -174,6 +174,8 @@ const LanguageSelector = ({
       lang.code.toLowerCase().includes(localSearch.toLowerCase())
     )
 
+  const detectedLanguage = detectedLang ? languages.find(l => l.code === detectedLang) : null
+
   return (
     <div className="relative flex-grow" ref={dropdownRef}>
       <button
@@ -181,7 +183,11 @@ const LanguageSelector = ({
         className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 text-left flex items-center"
       >
         <span className="mr-2">{selectedLang?.flag}</span>
-        <span>{selectedLang?.name}</span>
+        <span>
+          {isSource && value === 'auto' && detectedLanguage
+            ? `Auto (${detectedLanguage.name})`
+            : selectedLang?.name}
+        </span>
       </button>
 
       {isOpen && (
