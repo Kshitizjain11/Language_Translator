@@ -10,7 +10,7 @@ import PronunciationPractice from '@/components/learning/PronunciationPractice';
 import type { FlashCard, Translation } from '@/types/learning';
 import { FaClock, FaChartLine, FaTrophy } from 'react-icons/fa';
 import AuthGuard from '@/components/AuthGuard';
-import FeaturePanel from '@/components/FeaturePanel';
+import FeaturePanel from '@/components/leftPanel/FeaturePanel';
 
 // Simulated user ID (replace with actual auth)
 const USER_ID = 'user123';
@@ -25,8 +25,8 @@ interface DifficultyOption {
   description: string;
 }
 
-export default function LearningMode() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('progress');
+export default function LearningPage() {
+  const [activeFeature, setActiveFeature] = useState<string>('progress');
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [translations, setTranslations] = useState<Record<string, Translation>>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
@@ -115,7 +115,7 @@ export default function LearningMode() {
   };
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (activeFeature) {
       case 'progress':
         return (
           <div className="text-white">
@@ -206,7 +206,7 @@ export default function LearningMode() {
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-        <FeaturePanel activeFeature={activeTab} setActiveFeature={setActiveTab} />
+        <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
         <main className="flex-1 flex flex-col">
           <div className="p-6 text-white">
             {renderContent()}

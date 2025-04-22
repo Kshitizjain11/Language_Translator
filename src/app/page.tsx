@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 
 const languages = [
+  { code: 'auto', name: 'Auto detect', flag: '🔄' },
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'es', name: 'Spanish', flag: '🇪🇸' },
   { code: 'fr', name: 'French', flag: '🇫🇷' },
@@ -33,11 +34,12 @@ export default function Home() {
   const [activeFeature, setActiveFeature] = useState('translator');
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
+  const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('es')
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isAutoTranslate, setIsAutoTranslate] = useState(false)
+  const [detectedLang, setDetectedLang] = useState('')
   const router = useRouter();
 
   useEffect(() => {
@@ -62,6 +64,21 @@ export default function Home() {
   const handleInputChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setInputText(newText);
+    
+    // Auto detect language when text is entered and source is set to auto
+    if (sourceLang === 'auto' && newText.trim().length > 5) {
+      try {
+        const response = await fetch('/api/detect-language', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: newText })
+        });
+        const data = await response.json();
+        setDetectedLang(data.detectedLanguage);
+      } catch (error) {
+        console.error('Language detection error:', error);
+      }
+    }
     
     if (isAutoTranslate && newText.trim()) {
       await translateText(newText, false);
@@ -215,22 +232,33 @@ export default function Home() {
                   {/* Input Section */}
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <select
-                        value={sourceLang}
-                        onChange={(e) => setSourceLang(e.target.value)}
-                        className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-                      >
-                        {languages.map((lang) => (
-                          <option key={lang.code} value={lang.code}>
-                            {lang.flag} {lang.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative flex-grow">
+                        <select
+                          value={sourceLang}
+                          onChange={(e) => setSourceLang(e.target.value)}
+                          className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12"
+                        >
+                          {languages.map((lang) => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.flag} {lang.name}
+                            </option>
+                          ))}
+                        </select>
+                        {sourceLang === 'auto' && detectedLang && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-3">
+                            <span className="text-sm text-blue-500 dark:text-blue-400">
+                              Detected: {languages.find(l => l.code === detectedLang)?.flag}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={startListening}
-                        className={`ml-2 btn ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                        className={`ml-2 btn ${
+                          isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-full`}
                       >
-                        <FaMicrophone />
+                        <FaMicrophone className="w-4 h-4" />
                       </button>
                     </div>
                     
