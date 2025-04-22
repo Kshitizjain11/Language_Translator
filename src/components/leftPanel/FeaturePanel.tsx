@@ -30,9 +30,9 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
   ];
 
   return (
-    <aside className="w-64 bg-white h-screen border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-blue-600">LangTools</h1>
+    <aside className="w-64 bg-gradient-to-b from-blue-500 to-purple-600 h-screen flex flex-col">
+      <div className="p-4 border-b border-white/10">
+        <h1 className="text-xl font-bold text-white">LangTools</h1>
       </div>
       
       <nav className="flex-1 overflow-y-auto py-4">
@@ -41,10 +41,10 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
             <li key={feature.id}>
               <button
                 onClick={() => setActiveFeature(feature.id)}
-                className={`flex items-center w-full px-4 py-3 text-left ${
+                className={`flex items-center w-full px-4 py-3 text-left transition-colors ${
                   activeFeature === feature.id
-                    ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-white/20 text-white border-r-4 border-white'
+                    : 'text-white/80 hover:bg-white/10'
                 }`}
               >
                 <span className="mr-3">{feature.icon}</span>
@@ -55,8 +55,8 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
         </ul>
       </nav>
       
-      <div className="p-4 border-t border-gray-200">
-        <Link href="/help" className="flex items-center text-gray-600 hover:text-blue-600">
+      <div className="p-4 border-t border-white/10">
+        <Link href="/help" className="flex items-center text-white/80 hover:text-white">
           <FaQuestionCircle className="mr-2" />
           Help Center
         </Link>

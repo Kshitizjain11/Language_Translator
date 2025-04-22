@@ -71,42 +71,42 @@ export default function Summarizer() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white p-4 shadow-sm">
-        <h2 className="text-xl font-semibold">Summarizer</h2>
-        <p className="text-gray-600 text-sm">Create concise summaries of long texts</p>
+      <div className="bg-gray-800 p-4 shadow-sm">
+        <h2 className="text-xl font-semibold text-white">Summarizer</h2>
+        <p className="text-gray-300 text-sm">Create concise summaries of long texts</p>
       </div>
       
       <div className="flex-1 flex flex-col md:flex-row p-4 gap-4">
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Original Text</label>
-            <div className="text-sm text-gray-500">{wordCount.original} words</div>
+            <label className="font-medium text-white">Original Text</label>
+            <div className="text-sm text-gray-300">{wordCount.original} words</div>
           </div>
           <textarea
             value={text}
             onChange={handleTextChange}
             placeholder="Enter or paste your text here to summarize..."
-            className="flex-1 border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-gray-700 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-800 text-white placeholder-gray-400"
           />
         </div>
         
         <div className="flex-1 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
-            <label className="font-medium">Summary</label>
+            <label className="font-medium text-white">Summary</label>
             <div className="flex items-center space-x-2">
-              <div className="text-sm text-gray-500">{wordCount.summary} words</div>
+              <div className="text-sm text-gray-300">{wordCount.summary} words</div>
               {summary && (
                 <>
                   <button 
                     onClick={copyToClipboard}
-                    className="text-gray-500 hover:text-blue-600"
+                    className="text-gray-300 hover:text-blue-400"
                     title="Copy to clipboard"
                   >
                     <FaCopy />
                   </button>
                   <button 
                     onClick={downloadSummary}
-                    className="text-gray-500 hover:text-blue-600"
+                    className="text-gray-300 hover:text-blue-400"
                     title="Download summary"
                   >
                     <FaDownload />
@@ -115,9 +115,9 @@ export default function Summarizer() {
               )}
             </div>
           </div>
-          <div className="flex-1 border border-gray-300 rounded p-3 overflow-auto bg-white">
+          <div className="flex-1 border border-gray-700 rounded p-3 overflow-auto bg-gray-800">
             {summary ? (
-              <div>{summary}</div>
+              <div className="text-white">{summary}</div>
             ) : (
               <div className="text-gray-400 h-full flex items-center justify-center">
                 {loading ? 'Generating summary...' : 'Your summary will appear here'}
@@ -127,11 +127,11 @@ export default function Summarizer() {
         </div>
       </div>
       
-      <div className="bg-gray-50 p-4 border-t">
+      <div className="bg-gray-800 p-4 border-t border-gray-700">
         <div className="flex justify-between items-center">
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center text-gray-700 hover:text-blue-600"
+            className="flex items-center text-gray-300 hover:text-blue-400"
           >
             <FaSlidersH className="mr-2" />
             {showSettings ? 'Hide Settings' : 'Show Settings'}
@@ -140,7 +140,7 @@ export default function Summarizer() {
           <button 
             onClick={summarizeText}
             disabled={!text.trim() || loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 flex items-center"
+            className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 flex items-center hover:bg-blue-700"
           >
             {loading && <FaSpinner className="animate-spin mr-2" />}
             Summarize
@@ -150,23 +150,23 @@ export default function Summarizer() {
         {showSettings && (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Summary Length</label>
-              <div className="flex border rounded overflow-hidden">
+              <label className="block text-sm font-medium text-white mb-2">Summary Length</label>
+              <div className="flex border border-gray-700 rounded overflow-hidden">
                 <button
                   onClick={() => setLength('short')}
-                  className={`flex-1 py-2 ${length === 'short' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${length === 'short' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Short
                 </button>
                 <button
                   onClick={() => setLength('medium')}
-                  className={`flex-1 py-2 ${length === 'medium' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${length === 'medium' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Medium
                 </button>
                 <button
                   onClick={() => setLength('long')}
-                  className={`flex-1 py-2 ${length === 'long' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${length === 'long' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Long
                 </button>
@@ -174,23 +174,23 @@ export default function Summarizer() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Tone</label>
-              <div className="flex border rounded overflow-hidden">
+              <label className="block text-sm font-medium text-white mb-2">Tone</label>
+              <div className="flex border border-gray-700 rounded overflow-hidden">
                 <button
                   onClick={() => setTone('neutral')}
-                  className={`flex-1 py-2 ${tone === 'neutral' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${tone === 'neutral' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Neutral
                 </button>
                 <button
                   onClick={() => setTone('formal')}
-                  className={`flex-1 py-2 ${tone === 'formal' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${tone === 'formal' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Formal
                 </button>
                 <button
                   onClick={() => setTone('casual')}
-                  className={`flex-1 py-2 ${tone === 'casual' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`flex-1 py-2 ${tone === 'casual' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                 >
                   Casual
                 </button>

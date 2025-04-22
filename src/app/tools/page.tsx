@@ -84,10 +84,12 @@ export default function ToolsPage() {
 
   return (
     <AuthGuard>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
         <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
         <main className="flex-1 flex flex-col">
-          {renderFeatureContent()}
+          <div className="p-6 text-white">
+            {renderFeatureContent()}
+          </div>
         </main>
       </div>
     </AuthGuard>

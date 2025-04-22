@@ -9,6 +9,8 @@ import VocabularyTrainer from '@/components/learning/VocabularyTrainer';
 import PronunciationPractice from '@/components/learning/PronunciationPractice';
 import type { FlashCard, Translation } from '@/types/learning';
 import { FaClock, FaChartLine, FaTrophy } from 'react-icons/fa';
+import AuthGuard from '@/components/AuthGuard';
+import FeaturePanel from '@/components/FeaturePanel';
 
 // Simulated user ID (replace with actual auth)
 const USER_ID = 'user123';
@@ -115,7 +117,11 @@ export default function LearningMode() {
   const renderContent = () => {
     switch (activeTab) {
       case 'progress':
-        return <ProgressReport userId={USER_ID} />;
+        return (
+          <div className="text-white">
+            <ProgressReport userId={USER_ID} />
+          </div>
+        );
 
       case 'flashcards':
         return (
@@ -130,8 +136,8 @@ export default function LearningMode() {
                 />
               ))
             ) : (
-              <div className="text-center py-12 bg-white rounded-xl shadow-lg">
-                <p className="text-xl text-gray-600">
+              <div className="text-center py-12 bg-gray-700 rounded-xl shadow-lg">
+                <p className="text-xl text-white">
                   No flashcards due for review! Keep translating to create more cards.
                 </p>
               </div>
@@ -143,7 +149,7 @@ export default function LearningMode() {
         if (!selectedDifficulty) {
           return (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">Select Quiz Difficulty</h2>
+              <h2 className="text-2xl font-bold text-white">Select Quiz Difficulty</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {(Object.keys(difficultySettings) as Difficulty[]).map((level) => (
                   <button
@@ -167,20 +173,30 @@ export default function LearningMode() {
           );
         }
         return (
-          <Quiz
-            userId={USER_ID}
-            difficulty={selectedDifficulty}
-            sourceLang="en"
-            targetLang="es"
-            onComplete={handleQuizComplete}
-          />
+          <div className="text-white">
+            <Quiz
+              userId={USER_ID}
+              difficulty={selectedDifficulty}
+              sourceLang="en"
+              targetLang="es"
+              onComplete={handleQuizComplete}
+            />
+          </div>
         );
 
       case 'vocabulary':
-        return <VocabularyTrainer userId={USER_ID} />;
+        return (
+          <div className="text-white">
+            <VocabularyTrainer userId={USER_ID} />
+          </div>
+        );
 
       case 'pronunciation':
-        return <PronunciationPractice userId={USER_ID} />;
+        return (
+          <div className="text-white">
+            <PronunciationPractice userId={USER_ID} />
+          </div>
+        );
 
       default:
         return null;
@@ -188,13 +204,15 @@ export default function LearningMode() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="flex-1 py-8 px-4">
-        <main>
-          {renderContent()}
+    <AuthGuard>
+      <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+        <FeaturePanel activeFeature={activeTab} setActiveFeature={setActiveTab} />
+        <main className="flex-1 flex flex-col">
+          <div className="p-6 text-white">
+            {renderContent()}
+          </div>
         </main>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

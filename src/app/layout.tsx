@@ -3,6 +3,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import ChatBot from '@/components/ChatBot'
+import { ThemeProvider } from '@/context/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,12 +18,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <main className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-          {children}
-        </main>
-        <ChatBot />
+    <html lang="en" className="dark">
+      <body className="bg-gray-100 dark:bg-gray-900 min-h-screen">
+        <ThemeProvider>
+          <main className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+            {children}
+          </main>
+          <ChatBot />
+        </ThemeProvider>
       </body>
     </html>
   )
