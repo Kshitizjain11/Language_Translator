@@ -14,6 +14,7 @@ import Paraphraser from '@/components/features/Paraphraser';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import LearningMode from '@/components/learning/LearningMode'
+import LearningDashboard from '@/components/learning/LearningDashboard'
 
 interface Language {
   code: string;
@@ -101,7 +102,7 @@ const languages: Language[] = [
   { code: 'ro', name: 'Romanian', flag: '🇷🇴', display: '🇷🇴 Romanian' },
   { code: 'ru', name: 'Russian', flag: '🇷🇺', display: '🇷🇺 Russian' },
   { code: 'sm', name: 'Samoan', flag: '🇼🇸', display: '🇼🇸 Samoan' },
-  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧󠁢󠁳��󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
+  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧����󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
   { code: 'sr', name: 'Serbian', flag: '🇷🇸', display: '🇷🇸 Serbian' },
   { code: 'st', name: 'Sesotho', flag: '🇱🇸', display: '🇱🇸 Sesotho' },
   { code: 'sn', name: 'Shona', flag: '🇿🇼', display: '🇿🇼 Shona' },
@@ -127,7 +128,7 @@ const languages: Language[] = [
   { code: 'ug', name: 'Uyghur', flag: '🇨🇳', display: '🇨🇳 Uyghur' },
   { code: 'uz', name: 'Uzbek', flag: '🇺🇿', display: '🇺🇿 Uzbek' },
   { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', display: '🇻🇳 Vietnamese' },
-  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬��󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
+  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷��󠁳󠁿', display: '��󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
   { code: 'xh', name: 'Xhosa', flag: '🇿🇦', display: '🇿🇦 Xhosa' },
   { code: 'yi', name: 'Yiddish', flag: '🌍', display: '🌍 Yiddish' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬', display: '🇳🇬 Yoruba' },
@@ -260,6 +261,7 @@ export default function Home() {
   const targetDropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter();
   const [isRotating, setIsRotating] = useState(false)
+  const [activeTab, setActiveTab] = useState<'translate' | 'learn'>('translate')
 
   useEffect(() => {
     // Check if user is logged in
@@ -323,55 +325,55 @@ export default function Home() {
       setOutputText(data.translation);
       
       if (saveToHistory) {
-        // Create translation record
-        const translation = {
-          id: Math.random().toString(36).substr(2, 9),
-          userId,
+      // Create translation record
+      const translation = {
+        id: Math.random().toString(36).substr(2, 9),
+        userId,
           sourceText: text,
+        targetText: data.translation,
+        sourceLang: languages.find((l) => l.code === sourceLang)?.name || 'English',
+        targetLang: languages.find((l) => l.code === targetLang)?.name || 'Spanish',
+        frequency: 1,
+        lastTranslated: new Date(),
+        createdAt: new Date(),
+      };
+      
+      // Save to localStorage
+      const savedHistory = localStorage.getItem(`translationHistory_${userId}`);
+      let history = [];
+      
+      if (savedHistory) {
+        try {
+          history = JSON.parse(savedHistory);
+        } catch (e) {
+          console.error('Error parsing saved history:', e);
+        }
+      }
+      
+      // Add new translation to the beginning of the array
+      history.unshift(translation);
+      
+      // Limit to 50 entries
+      if (history.length > 50) {
+        history = history.slice(0, 50);
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem(`translationHistory_${userId}`, JSON.stringify(history));
+      
+      // Also record in API for server-side tracking
+      await fetch('/api/learning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'translation',
+          userId,
+            sourceText: text,
           targetText: data.translation,
           sourceLang: languages.find((l) => l.code === sourceLang)?.name || 'English',
           targetLang: languages.find((l) => l.code === targetLang)?.name || 'Spanish',
-          frequency: 1,
-          lastTranslated: new Date(),
-          createdAt: new Date(),
-        };
-        
-        // Save to localStorage
-        const savedHistory = localStorage.getItem(`translationHistory_${userId}`);
-        let history = [];
-        
-        if (savedHistory) {
-          try {
-            history = JSON.parse(savedHistory);
-          } catch (e) {
-            console.error('Error parsing saved history:', e);
-          }
-        }
-        
-        // Add new translation to the beginning of the array
-        history.unshift(translation);
-        
-        // Limit to 50 entries
-        if (history.length > 50) {
-          history = history.slice(0, 50);
-        }
-        
-        // Save back to localStorage
-        localStorage.setItem(`translationHistory_${userId}`, JSON.stringify(history));
-        
-        // Also record in API for server-side tracking
-        await fetch('/api/learning', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'translation',
-            userId,
-            sourceText: text,
-            targetText: data.translation,
-            sourceLang: languages.find((l) => l.code === sourceLang)?.name || 'English',
-            targetLang: languages.find((l) => l.code === targetLang)?.name || 'Spanish',
-          }),
-        });
+        }),
+      });
       }
     } catch (error) {
       console.error('Translation error:', error);
@@ -442,167 +444,217 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-      <div className="flex">
-        <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
-        <div className="flex-1">
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-white">
-                {activeFeature.charAt(0).toUpperCase() + activeFeature.slice(1)}
-              </h1>
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-full hover:bg-gray-700 text-gray-300"
-              >
-                {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {activeFeature === 'translator' && (
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Input Section */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <LanguageSelector
-                        isSource
-                        value={sourceLang}
-                        onChange={setSourceLang}
-                        isOpen={isSourceDropdownOpen}
-                        setIsOpen={setIsSourceDropdownOpen}
-                        languages={languages}
-                        detectedLang={detectedLang}
-                      />
-                      <button
-                        onClick={startListening}
-                        className={`ml-2 btn ${
-                          isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
-                        } text-white transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-full`}
-                      >
-                        <FaMicrophone className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <textarea
-                      value={inputText}
-                      onChange={handleInputChange}
-                      placeholder="Enter text to translate..."
-                      className="input-field h-48 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 placeholder-gray-500 dark:placeholder-gray-400"
-                    />
-                  </div>
-
-                  {/* Output Section */}
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <LanguageSelector
-                        value={targetLang}
-                        onChange={setTargetLang}
-                        isOpen={isTargetDropdownOpen}
-                        setIsOpen={setIsTargetDropdownOpen}
-                        languages={languages}
-                      />
-                      <button
-                        onClick={() => speakText(outputText)}
-                        disabled={!outputText}
-                        className="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-10 h-10 rounded-full"
-                      >
-                        <FaVolumeUp className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="relative">
-                      <textarea
-                        value={outputText}
-                        readOnly
-                        placeholder="Translation will appear here..."
-                        className="input-field h-48 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 placeholder-gray-500 dark:placeholder-gray-400"
-                      />
-                      {isLoading && (
-                        <motion.div
-                          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 dark:bg-opacity-20"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <div className="loader text-blue-500 dark:text-blue-400">Translating...</div>
-                        </motion.div>
-                      )}
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={copyToClipboard}
-                        disabled={!outputText}
-                        className="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FaCopy className="inline mr-2" /> Copy
-                      </button>
-                      <button
-                        onClick={downloadTranscript}
-                        disabled={!outputText}
-                        className="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FaDownload className="inline mr-2" /> Download
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Reverse Button */}
-                <div className="flex justify-center">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <nav className="bg-white dark:bg-gray-800 shadow-sm">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-8">
+                <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
+                  Language Translator
+                  </Link>
+                <div className="hidden md:flex space-x-4">
                   <button
-                    onClick={handleReverseLanguages}
-                    className={`p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform duration-500 ${
-                      isRotating ? 'rotate-180' : ''
+                    onClick={() => setActiveTab('translate')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'translate'
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                  >
-                    <FaSync className="w-6 h-6" />
-                  </button>
-                </div>
-
-                {/* Translate Button and Auto Translate Toggle */}
-                <div className="flex justify-center space-x-4">
-                  <button
-                    onClick={() => setIsAutoTranslate(!isAutoTranslate)}
-                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                      isAutoTranslate
-                        ? 'bg-green-500 hover:bg-green-600 text-white'
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200'
-                    }`}
-                  >
-                    {isAutoTranslate ? 'Auto Translate On' : 'Auto Translate Off'}
-                  </button>
-                  <button
-                    onClick={handleTranslate}
-                    disabled={!inputText.trim() || isAutoTranslate}
-                    className="px-12 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Translate
                   </button>
+                  <button
+                    onClick={() => setActiveTab('learn')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'learn'
+                        ? 'bg-blue-500 text-white'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    Learn
+                  </button>
                 </div>
               </div>
-            )}
-            
-            {activeFeature === 'history' && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-                <TranslationHistoryPanel userId={userId} limit={20} />
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
+                >
+                  Logout
+                </button>
               </div>
-            )}
-            
-            {activeFeature === 'grammar' && <GrammarCheck />}
-            {activeFeature === 'dictionary' && <Dictionary />}
-            {activeFeature === 'summarizer' && <Summarizer />}
-            {activeFeature === 'paraphraser' && <Paraphraser />}
-            {activeFeature === 'learning' && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-                <LearningMode />
+            </div>
+          </div>
+        </nav>
+
+        {activeTab === 'translate' ? (
+          <main className="container mx-auto px-4 py-8">
+            <div className="flex">
+              <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
+              <div className="flex-1">
+                <div className="p-4 border-b border-gray-700">
+                  <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-white">
+                      {activeFeature.charAt(0).toUpperCase() + activeFeature.slice(1)}
+                    </h1>
+                </div>
               </div>
-            )}
+
+                <div className="p-6">
+              {activeFeature === 'translator' && (
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Input Section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                            <LanguageSelector
+                              isSource
+                          value={sourceLang}
+                              onChange={setSourceLang}
+                              isOpen={isSourceDropdownOpen}
+                              setIsOpen={setIsSourceDropdownOpen}
+                              languages={languages}
+                              detectedLang={detectedLang}
+                            />
+                        <button
+                          onClick={startListening}
+                              className={`ml-2 btn ${
+                                isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
+                              } text-white transition-colors duration-200 flex items-center justify-center w-10 h-10 rounded-full`}
+                        >
+                              <FaMicrophone className="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <textarea
+                        value={inputText}
+                            onChange={handleInputChange}
+                        placeholder="Enter text to translate..."
+                        className="input-field h-48 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 placeholder-gray-500 dark:placeholder-gray-400"
+                      />
+                    </div>
+
+                    {/* Output Section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                            <LanguageSelector
+                          value={targetLang}
+                              onChange={setTargetLang}
+                              isOpen={isTargetDropdownOpen}
+                              setIsOpen={setIsTargetDropdownOpen}
+                              languages={languages}
+                            />
+                        <button
+                          onClick={() => speakText(outputText)}
+                          disabled={!outputText}
+                              className="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-10 h-10 rounded-full"
+                        >
+                              <FaVolumeUp className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <textarea
+                          value={outputText}
+                          readOnly
+                          placeholder="Translation will appear here..."
+                          className="input-field h-48 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        {isLoading && (
+                          <motion.div
+                            className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 dark:bg-opacity-20"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="loader text-blue-500 dark:text-blue-400">Translating...</div>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={copyToClipboard}
+                          disabled={!outputText}
+                          className="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <FaCopy className="inline mr-2" /> Copy
+                        </button>
+                        <button
+                          onClick={downloadTranscript}
+                          disabled={!outputText}
+                          className="btn flex-1 bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <FaDownload className="inline mr-2" /> Download
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                      {/* Reverse Button */}
+                  <div className="flex justify-center">
+                        <button
+                          onClick={handleReverseLanguages}
+                          className={`p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform duration-500 ${
+                            isRotating ? 'rotate-180' : ''
+                          }`}
+                        >
+                          <FaSync className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      {/* Translate Button and Auto Translate Toggle */}
+                      <div className="flex justify-center space-x-4">
+                        <button
+                          onClick={() => setIsAutoTranslate(!isAutoTranslate)}
+                          className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                            isAutoTranslate
+                              ? 'bg-green-500 hover:bg-green-600 text-white'
+                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200'
+                          }`}
+                        >
+                          {isAutoTranslate ? 'Auto Translate On' : 'Auto Translate Off'}
+                        </button>
+                    <button
+                      onClick={handleTranslate}
+                          disabled={!inputText.trim() || isAutoTranslate}
+                      className="px-12 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Translate
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {activeFeature === 'history' && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                  <TranslationHistoryPanel userId={userId} limit={20} />
+                </div>
+              )}
+              
+              {activeFeature === 'grammar' && <GrammarCheck />}
+              {activeFeature === 'dictionary' && <Dictionary />}
+              {activeFeature === 'summarizer' && <Summarizer />}
+              {activeFeature === 'paraphraser' && <Paraphraser />}
+                  {activeFeature === 'learning' && (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                      <LearningMode />
+                    </div>
+                  )}
+            </div>
           </div>
         </div>
+          </main>
+        ) : (
+          <LearningDashboard />
+        )}
       </div>
-    </div>
+    </AuthGuard>
   )
 }
