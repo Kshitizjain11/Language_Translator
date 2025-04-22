@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, Suspense } from 'react'
-import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun } from 'react-icons/fa'
+import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun, FaSync } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import TranslationHistoryPanel from '@/components/learning/TranslationHistoryPanel';
@@ -15,18 +15,116 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 
 const languages = [
-  { code: 'auto', name: 'Auto detect', flag: '🔄' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-  { code: 'fr', name: 'French', flag: '🇫🇷' },
-  { code: 'de', name: 'German', flag: '🇩🇪' },
-  { code: 'it', name: 'Italian', flag: '🇮🇹' },
-  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
-  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
-  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
-]
+  { code: 'auto', name: 'Auto detect', display: '🔄 Auto detect' },
+  { code: 'af', name: 'Afrikaans', flag: '🇿🇦', display: '🇿🇦 Afrikaans' },
+  { code: 'sq', name: 'Albanian', flag: '🇦🇱', display: '🇦🇱 Albanian' },
+  { code: 'am', name: 'Amharic', flag: '🇪🇹', display: '🇪🇹 Amharic' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦', display: '🇸🇦 Arabic' },
+  { code: 'hy', name: 'Armenian', flag: '🇦🇲', display: '🇦🇲 Armenian' },
+  { code: 'az', name: 'Azerbaijani', flag: '🇦🇿', display: '🇦🇿 Azerbaijani' },
+  { code: 'eu', name: 'Basque', flag: '🏴󠁥󠁳󠁰󠁶󠁿', display: '🏴󠁥󠁳󠁰󠁶󠁿 Basque' },
+  { code: 'be', name: 'Belarusian', flag: '🇧🇾', display: '🇧🇾 Belarusian' },
+  { code: 'bn', name: 'Bengali', flag: '🇧🇩', display: '🇧🇩 Bengali' },
+  { code: 'bs', name: 'Bosnian', flag: '🇧🇦', display: '🇧🇦 Bosnian' },
+  { code: 'bg', name: 'Bulgarian', flag: '🇧🇬', display: '🇧🇬 Bulgarian' },
+  { code: 'ca', name: 'Catalan', flag: '🏴󠁥󠁳󠁣󠁴󠁿', display: '🏴󠁥󠁳󠁣󠁴󠁿 Catalan' },
+  { code: 'ceb', name: 'Cebuano', flag: '🇵🇭', display: '🇵🇭 Cebuano' },
+  { code: 'zh', name: 'Chinese (Simplified)', flag: '🇨🇳', display: '🇨🇳 Chinese (Simplified)' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', flag: '🇹🇼', display: '🇹🇼 Chinese (Traditional)' },
+  { code: 'co', name: 'Corsican', flag: '🇫🇷', display: '🇫🇷 Corsican' },
+  { code: 'hr', name: 'Croatian', flag: '🇭🇷', display: '🇭🇷 Croatian' },
+  { code: 'cs', name: 'Czech', flag: '🇨🇿', display: '🇨🇿 Czech' },
+  { code: 'da', name: 'Danish', flag: '🇩🇰', display: '🇩🇰 Danish' },
+  { code: 'nl', name: 'Dutch', flag: '🇳🇱', display: '🇳🇱 Dutch' },
+  { code: 'en', name: 'English', flag: '🇺🇸', display: '🇺🇸 English' },
+  { code: 'eo', name: 'Esperanto', flag: '🌍', display: '🌍 Esperanto' },
+  { code: 'et', name: 'Estonian', flag: '🇪🇪', display: '🇪🇪 Estonian' },
+  { code: 'fi', name: 'Finnish', flag: '🇫🇮', display: '🇫🇮 Finnish' },
+  { code: 'fr', name: 'French', flag: '🇫🇷', display: '🇫🇷 French' },
+  { code: 'fy', name: 'Frisian', flag: '🇳🇱', display: '🇳🇱 Frisian' },
+  { code: 'gl', name: 'Galician', flag: '🇪🇸', display: '🇪🇸 Galician' },
+  { code: 'ka', name: 'Georgian', flag: '🇬🇪', display: '🇬🇪 Georgian' },
+  { code: 'de', name: 'German', flag: '🇩🇪', display: '🇩🇪 German' },
+  { code: 'el', name: 'Greek', flag: '🇬🇷', display: '🇬🇷 Greek' },
+  { code: 'gu', name: 'Gujarati', flag: '🇮🇳', display: '🇮🇳 Gujarati' },
+  { code: 'ht', name: 'Haitian Creole', flag: '🇭🇹', display: '🇭🇹 Haitian Creole' },
+  { code: 'ha', name: 'Hausa', flag: '🇳🇬', display: '🇳🇬 Hausa' },
+  { code: 'haw', name: 'Hawaiian', flag: '🌺', display: '🌺 Hawaiian' },
+  { code: 'he', name: 'Hebrew', flag: '🇮🇱', display: '🇮🇱 Hebrew' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳', display: '🇮🇳 Hindi' },
+  { code: 'hmn', name: 'Hmong', flag: '🌏', display: '🌏 Hmong' },
+  { code: 'hu', name: 'Hungarian', flag: '🇭🇺', display: '🇭🇺 Hungarian' },
+  { code: 'is', name: 'Icelandic', flag: '🇮🇸', display: '🇮🇸 Icelandic' },
+  { code: 'ig', name: 'Igbo', flag: '🇳🇬', display: '🇳🇬 Igbo' },
+  { code: 'id', name: 'Indonesian', flag: '🇮🇩', display: '🇮🇩 Indonesian' },
+  { code: 'ga', name: 'Irish', flag: '🇮🇪', display: '🇮🇪 Irish' },
+  { code: 'it', name: 'Italian', flag: '🇮🇹', display: '🇮🇹 Italian' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵', display: '🇯🇵 Japanese' },
+  { code: 'jv', name: 'Javanese', flag: '🇮🇩', display: '🇮🇩 Javanese' },
+  { code: 'kn', name: 'Kannada', flag: '🇮🇳', display: '🇮🇳 Kannada' },
+  { code: 'kk', name: 'Kazakh', flag: '🇰🇿', display: '🇰🇿 Kazakh' },
+  { code: 'km', name: 'Khmer', flag: '🇰🇭', display: '🇰🇭 Khmer' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷', display: '🇰🇷 Korean' },
+  { code: 'ku', name: 'Kurdish', flag: '🏳️', display: '🏳️ Kurdish' },
+  { code: 'ky', name: 'Kyrgyz', flag: '🇰🇬', display: '🇰🇬 Kyrgyz' },
+  { code: 'lo', name: 'Lao', flag: '🇱🇦', display: '🇱🇦 Lao' },
+  { code: 'la', name: 'Latin', flag: '🏛️', display: '🏛️ Latin' },
+  { code: 'lv', name: 'Latvian', flag: '🇱🇻', display: '🇱🇻 Latvian' },
+  { code: 'lt', name: 'Lithuanian', flag: '🇱🇹', display: '🇱🇹 Lithuanian' },
+  { code: 'lb', name: 'Luxembourgish', flag: '🇱🇺', display: '🇱🇺 Luxembourgish' },
+  { code: 'mk', name: 'Macedonian', flag: '🇲🇰', display: '🇲🇰 Macedonian' },
+  { code: 'mg', name: 'Malagasy', flag: '🇲🇬', display: '🇲🇬 Malagasy' },
+  { code: 'ms', name: 'Malay', flag: '🇲🇾', display: '🇲🇾 Malay' },
+  { code: 'ml', name: 'Malayalam', flag: '🇮🇳', display: '🇮🇳 Malayalam' },
+  { code: 'mt', name: 'Maltese', flag: '🇲🇹', display: '🇲🇹 Maltese' },
+  { code: 'mi', name: 'Maori', flag: '🇳🇿', display: '🇳🇿 Maori' },
+  { code: 'mr', name: 'Marathi', flag: '🇮🇳', display: '🇮🇳 Marathi' },
+  { code: 'mn', name: 'Mongolian', flag: '🇲🇳', display: '🇲🇳 Mongolian' },
+  { code: 'my', name: 'Myanmar (Burmese)', flag: '🇲🇲', display: '🇲🇲 Myanmar (Burmese)' },
+  { code: 'ne', name: 'Nepali', flag: '🇳🇵', display: '🇳🇵 Nepali' },
+  { code: 'no', name: 'Norwegian', flag: '🇳🇴', display: '🇳🇴 Norwegian' },
+  { code: 'ny', name: 'Nyanja (Chichewa)', flag: '🇲🇼', display: '🇲🇼 Nyanja (Chichewa)' },
+  { code: 'or', name: 'Odia (Oriya)', flag: '🇮🇳', display: '🇮🇳 Odia (Oriya)' },
+  { code: 'ps', name: 'Pashto', flag: '🇦🇫', display: '🇦🇫 Pashto' },
+  { code: 'fa', name: 'Persian', flag: '🇮🇷', display: '🇮🇷 Persian' },
+  { code: 'pl', name: 'Polish', flag: '🇵🇱', display: '🇵🇱 Polish' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹', display: '🇵🇹 Portuguese' },
+  { code: 'pa', name: 'Punjabi', flag: '🇮🇳', display: '🇮🇳 Punjabi' },
+  { code: 'ro', name: 'Romanian', flag: '🇷🇴', display: '🇷🇴 Romanian' },
+  { code: 'ru', name: 'Russian', flag: '🇷🇺', display: '🇷🇺 Russian' },
+  { code: 'sm', name: 'Samoan', flag: '🇼🇸', display: '🇼🇸 Samoan' },
+  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
+  { code: 'sr', name: 'Serbian', flag: '🇷🇸', display: '🇷🇸 Serbian' },
+  { code: 'st', name: 'Sesotho', flag: '🇱🇸', display: '🇱🇸 Sesotho' },
+  { code: 'sn', name: 'Shona', flag: '🇿🇼', display: '🇿🇼 Shona' },
+  { code: 'sd', name: 'Sindhi', flag: '🇵🇰', display: '🇵🇰 Sindhi' },
+  { code: 'si', name: 'Sinhala (Sinhalese)', flag: '🇱🇰', display: '🇱🇰 Sinhala' },
+  { code: 'sk', name: 'Slovak', flag: '🇸🇰', display: '🇸🇰 Slovak' },
+  { code: 'sl', name: 'Slovenian', flag: '🇸🇮', display: '🇸🇮 Slovenian' },
+  { code: 'so', name: 'Somali', flag: '🇸🇴', display: '🇸🇴 Somali' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸', display: '🇪🇸 Spanish' },
+  { code: 'su', name: 'Sundanese', flag: '🇮🇩', display: '🇮🇩 Sundanese' },
+  { code: 'sw', name: 'Swahili', flag: '🇹🇿', display: '🇹🇿 Swahili' },
+  { code: 'sv', name: 'Swedish', flag: '🇸🇪', display: '🇸🇪 Swedish' },
+  { code: 'tl', name: 'Tagalog (Filipino)', flag: '🇵🇭', display: '🇵🇭 Tagalog' },
+  { code: 'tg', name: 'Tajik', flag: '🇹🇯', display: '🇹🇯 Tajik' },
+  { code: 'ta', name: 'Tamil', flag: '🇮🇳', display: '🇮🇳 Tamil' },
+  { code: 'tt', name: 'Tatar', flag: '🇷🇺', display: '🇷🇺 Tatar' },
+  { code: 'te', name: 'Telugu', flag: '🇮🇳', display: '🇮🇳 Telugu' },
+  { code: 'th', name: 'Thai', flag: '🇹🇭', display: '🇹🇭 Thai' },
+  { code: 'tr', name: 'Turkish', flag: '🇹🇷', display: '🇹🇷 Turkish' },
+  { code: 'tk', name: 'Turkmen', flag: '🇹🇲', display: '🇹🇲 Turkmen' },
+  { code: 'uk', name: 'Ukrainian', flag: '🇺🇦', display: '🇺🇦 Ukrainian' },
+  { code: 'ur', name: 'Urdu', flag: '🇵🇰', display: '🇵🇰 Urdu' },
+  { code: 'ug', name: 'Uyghur', flag: '🇨🇳', display: '🇨🇳 Uyghur' },
+  { code: 'uz', name: 'Uzbek', flag: '🇺🇿', display: '🇺🇿 Uzbek' },
+  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', display: '🇻🇳 Vietnamese' },
+  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
+  { code: 'xh', name: 'Xhosa', flag: '🇿🇦', display: '🇿🇦 Xhosa' },
+  { code: 'yi', name: 'Yiddish', flag: '🌍', display: '🌍 Yiddish' },
+  { code: 'yo', name: 'Yoruba', flag: '🇳🇬', display: '🇳🇬 Yoruba' },
+  { code: 'zu', name: 'Zulu', flag: '🇿🇦', display: '🇿🇦 Zulu' }
+];
 
 export default function Home() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -233,20 +331,32 @@ export default function Home() {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <div className="relative flex-grow">
-                        <select
-                          value={sourceLang}
-                          onChange={(e) => setSourceLang(e.target.value)}
-                          className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12"
-                        >
-                          {languages.map((lang) => (
-                            <option key={lang.code} value={lang.code}>
-                              {lang.flag} {lang.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={sourceLang}
+                            onChange={(e) => setSourceLang(e.target.value)}
+                            className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 appearance-none"
+                          >
+                            {languages.map((lang) => (
+                              <option key={lang.code} value={lang.code}>
+                                {lang.display}
+                              </option>
+                            ))}
+                          </select>
+                          {sourceLang === 'auto' && (
+                            <div className="absolute right-10 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                              <FaSync className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" />
+                            </div>
+                          )}
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                         {sourceLang === 'auto' && detectedLang && (
-                          <div className="absolute right-0 top-0 h-full flex items-center pr-3">
-                            <span className="text-sm text-blue-500 dark:text-blue-400">
+                          <div className="absolute right-0 -bottom-6">
+                            <span className="text-sm text-blue-500 dark:text-blue-400 flex items-center">
                               Detected: {languages.find(l => l.code === detectedLang)?.flag}
                             </span>
                           </div>
@@ -273,23 +383,32 @@ export default function Home() {
                   {/* Output Section */}
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <select
-                        value={targetLang}
-                        onChange={(e) => setTargetLang(e.target.value)}
-                        className="input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-                      >
-                        {languages.map((lang) => (
-                          <option key={lang.code} value={lang.code}>
-                            {lang.flag} {lang.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative flex-grow">
+                        <div className="relative">
+                          <select
+                            value={targetLang}
+                            onChange={(e) => setTargetLang(e.target.value)}
+                            className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 appearance-none"
+                          >
+                            {languages.filter(lang => lang.code !== 'auto').map((lang) => (
+                              <option key={lang.code} value={lang.code}>
+                                {lang.display}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
                       <button
                         onClick={() => speakText(outputText)}
                         disabled={!outputText}
-                        className="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="ml-2 btn bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-10 h-10 rounded-full"
                       >
-                        <FaVolumeUp />
+                        <FaVolumeUp className="w-4 h-4" />
                       </button>
                     </div>
 
