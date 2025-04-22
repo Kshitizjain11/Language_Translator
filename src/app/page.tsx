@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, Suspense } from 'react'
-import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun, FaSync } from 'react-icons/fa'
+import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun, FaSync, FaSearch } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import TranslationHistoryPanel from '@/components/learning/TranslationHistoryPanel';
@@ -14,8 +14,15 @@ import Paraphraser from '@/components/features/Paraphraser';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 
-const languages = [
-  { code: 'auto', name: 'Auto detect', display: '🔄 Auto detect' },
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+  display: string;
+}
+
+const languages: Language[] = [
+  { code: 'auto', name: 'Auto detect', flag: '🔄', display: '🔄 Auto detect' },
   { code: 'af', name: 'Afrikaans', flag: '🇿🇦', display: '🇿🇦 Afrikaans' },
   { code: 'sq', name: 'Albanian', flag: '🇦🇱', display: '🇦🇱 Albanian' },
   { code: 'am', name: 'Amharic', flag: '🇪🇹', display: '🇪🇹 Amharic' },
@@ -93,7 +100,7 @@ const languages = [
   { code: 'ro', name: 'Romanian', flag: '🇷🇴', display: '🇷🇴 Romanian' },
   { code: 'ru', name: 'Russian', flag: '🇷🇺', display: '🇷🇺 Russian' },
   { code: 'sm', name: 'Samoan', flag: '🇼🇸', display: '🇼🇸 Samoan' },
-  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
+  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧󠁢󠁳��󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
   { code: 'sr', name: 'Serbian', flag: '🇷🇸', display: '🇷🇸 Serbian' },
   { code: 'st', name: 'Sesotho', flag: '🇱🇸', display: '🇱🇸 Sesotho' },
   { code: 'sn', name: 'Shona', flag: '🇿🇼', display: '🇿🇼 Shona' },
@@ -119,12 +126,113 @@ const languages = [
   { code: 'ug', name: 'Uyghur', flag: '🇨🇳', display: '🇨🇳 Uyghur' },
   { code: 'uz', name: 'Uzbek', flag: '🇺🇿', display: '🇺🇿 Uzbek' },
   { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', display: '🇻🇳 Vietnamese' },
-  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
+  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷��󠁳󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
   { code: 'xh', name: 'Xhosa', flag: '🇿🇦', display: '🇿🇦 Xhosa' },
   { code: 'yi', name: 'Yiddish', flag: '🌍', display: '🌍 Yiddish' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬', display: '🇳🇬 Yoruba' },
   { code: 'zu', name: 'Zulu', flag: '🇿🇦', display: '🇿🇦 Zulu' }
 ];
+
+// Custom Language Selector Component
+const LanguageSelector = ({ 
+  isSource = false, 
+  value, 
+  onChange, 
+  isOpen, 
+  setIsOpen, 
+  languages,
+  detectedLang 
+}: { 
+  isSource?: boolean, 
+  value: string, 
+  onChange: (code: string) => void,
+  isOpen: boolean,
+  setIsOpen: (isOpen: boolean) => void,
+  languages: Language[],
+  detectedLang?: string
+}) => {
+  const selectedLang = languages.find(l => l.code === value)
+  const [localSearch, setLocalSearch] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [setIsOpen])
+  
+  const filteredLangs = languages
+    .filter(lang => isSource || lang.code !== 'auto')
+    .filter(lang => 
+      lang.name.toLowerCase().includes(localSearch.toLowerCase()) ||
+      lang.code.toLowerCase().includes(localSearch.toLowerCase())
+    )
+
+  return (
+    <div className="relative flex-grow" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 text-left flex items-center"
+      >
+        <span className="mr-2">{selectedLang?.flag}</span>
+        <span>{selectedLang?.name}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-96 overflow-hidden">
+          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="relative">
+              <input
+                type="text"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                placeholder="Search languages..."
+                className="w-full px-3 py-2 pl-10 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 text-gray-900 dark:text-white"
+                autoFocus
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
+          <div className="overflow-y-auto max-h-80">
+            {filteredLangs.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => {
+                  onChange(lang.code)
+                  setIsOpen(false)
+                  setLocalSearch('')
+                }}
+                className={`w-full px-4 py-2 text-left flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  value === lang.code ? 'bg-blue-50 dark:bg-blue-900' : ''
+                }`}
+              >
+                <span className="mr-2 text-lg">{lang.flag}</span>
+                <span className="text-gray-900 dark:text-white">{lang.name}</span>
+                <span className="ml-2 text-gray-500 dark:text-gray-400 text-sm">({lang.code})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isSource && value === 'auto' && detectedLang && (
+        <div className="absolute left-0 -bottom-8 bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center space-x-2">
+          <span>Detected:</span>
+          <span className="font-medium flex items-center">
+            {languages.find(l => l.code === detectedLang)?.flag}
+            <span className="ml-1">{languages.find(l => l.code === detectedLang)?.name}</span>
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Home() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -138,7 +246,13 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false)
   const [isAutoTranslate, setIsAutoTranslate] = useState(false)
   const [detectedLang, setDetectedLang] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false)
+  const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false)
+  const sourceDropdownRef = useRef<HTMLDivElement>(null)
+  const targetDropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter();
+  const [isRotating, setIsRotating] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in
@@ -304,6 +418,22 @@ export default function Home() {
     document.body.removeChild(element)
   }
 
+  const filteredLanguages = languages.filter(lang =>
+    lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    lang.code.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleReverseLanguages = () => {
+    setIsRotating(true)
+    const tempLang = sourceLang
+    setSourceLang(targetLang)
+    setTargetLang(tempLang)
+    const tempText = inputText
+    setInputText(outputText)
+    setOutputText(tempText)
+    setTimeout(() => setIsRotating(false), 500)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <div className="flex">
@@ -330,38 +460,15 @@ export default function Home() {
                   {/* Input Section */}
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <div className="relative flex-grow">
-                        <div className="relative">
-                          <select
-                            value={sourceLang}
-                            onChange={(e) => setSourceLang(e.target.value)}
-                            className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 appearance-none"
-                          >
-                            {languages.map((lang) => (
-                              <option key={lang.code} value={lang.code}>
-                                {lang.display}
-                              </option>
-                            ))}
-                          </select>
-                          {sourceLang === 'auto' && (
-                            <div className="absolute right-10 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                              <FaSync className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin" />
-                            </div>
-                          )}
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                        </div>
-                        {sourceLang === 'auto' && detectedLang && (
-                          <div className="absolute right-0 -bottom-6">
-                            <span className="text-sm text-blue-500 dark:text-blue-400 flex items-center">
-                              Detected: {languages.find(l => l.code === detectedLang)?.flag}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      <LanguageSelector
+                        isSource
+                        value={sourceLang}
+                        onChange={setSourceLang}
+                        isOpen={isSourceDropdownOpen}
+                        setIsOpen={setIsSourceDropdownOpen}
+                        languages={languages}
+                        detectedLang={detectedLang}
+                      />
                       <button
                         onClick={startListening}
                         className={`ml-2 btn ${
@@ -383,26 +490,13 @@ export default function Home() {
                   {/* Output Section */}
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <div className="relative flex-grow">
-                        <div className="relative">
-                          <select
-                            value={targetLang}
-                            onChange={(e) => setTargetLang(e.target.value)}
-                            className="w-full input-field bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 pr-12 appearance-none"
-                          >
-                            {languages.filter(lang => lang.code !== 'auto').map((lang) => (
-                              <option key={lang.code} value={lang.code}>
-                                {lang.display}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
+                      <LanguageSelector
+                        value={targetLang}
+                        onChange={setTargetLang}
+                        isOpen={isTargetDropdownOpen}
+                        setIsOpen={setIsTargetDropdownOpen}
+                        languages={languages}
+                      />
                       <button
                         onClick={() => speakText(outputText)}
                         disabled={!outputText}
@@ -447,6 +541,18 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                {/* Reverse Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleReverseLanguages}
+                    className={`p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-transform duration-500 ${
+                      isRotating ? 'rotate-180' : ''
+                    }`}
+                  >
+                    <FaSync className="w-6 h-6" />
+                  </button>
                 </div>
 
                 {/* Translate Button and Auto Translate Toggle */}
