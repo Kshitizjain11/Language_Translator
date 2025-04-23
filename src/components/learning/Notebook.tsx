@@ -3,15 +3,15 @@ import { FaVolumeUp, FaTrash, FaFilter } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Language } from './LanguageSelector'
 
-interface Word {
+interface SavedWord {
   id: string
   word: string
-  meaning: string
-  pronunciation: string
-  example: string
-  date: string
-  learned: boolean
+  translation: string
+  pronunciation?: string
+  examples: string[]
   language: string
+  dateAdded: string
+  learned: boolean
 }
 
 interface NotebookProps {
@@ -19,20 +19,20 @@ interface NotebookProps {
 }
 
 const Notebook: React.FC<NotebookProps> = ({ selectedLanguage }) => {
-  const [savedWords, setSavedWords] = useState<Word[]>([])
-  const [filteredWords, setFilteredWords] = useState<Word[]>([])
+  const [savedWords, setSavedWords] = useState<SavedWord[]>([])
+  const [filteredWords, setFilteredWords] = useState<SavedWord[]>([])
   const [filterLearned, setFilterLearned] = useState<boolean | null>(null)
 
   useEffect(() => {
     const notebook = JSON.parse(localStorage.getItem('notebook') || '[]')
-    const wordsForLanguage = notebook.filter((word: Word) => word.language === selectedLanguage.code)
+    const wordsForLanguage = notebook.filter((word: SavedWord) => word.language === selectedLanguage.code)
     setSavedWords(wordsForLanguage)
     setFilteredWords(wordsForLanguage)
   }, [selectedLanguage])
 
   const handleRemoveWord = (wordId: string) => {
     const notebook = JSON.parse(localStorage.getItem('notebook') || '[]')
-    const updatedNotebook = notebook.filter((w: Word) => w.id !== wordId)
+    const updatedNotebook = notebook.filter((w: SavedWord) => w.id !== wordId)
     localStorage.setItem('notebook', JSON.stringify(updatedNotebook))
     
     const updatedWords = savedWords.filter(w => w.id !== wordId)
@@ -135,20 +135,27 @@ const Notebook: React.FC<NotebookProps> = ({ selectedLanguage }) => {
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {word.pronunciation}
+                {word.pronunciation && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {word.pronunciation}
+                  </div>
+                )}
+
+                <div className="mt-2 text-gray-700 dark:text-gray-300">
+                  <span className="font-semibold">Translation:</span> {word.translation}
                 </div>
 
                 <div className="mt-2 text-gray-700 dark:text-gray-300">
-                  <span className="font-semibold">Meaning:</span> {word.meaning}
-                </div>
-
-                <div className="mt-2 text-gray-700 dark:text-gray-300">
-                  <span className="font-semibold">Example:</span> {word.example}
+                  <span className="font-semibold">Examples:</span>
+                  <ul className="list-disc pl-5 text-sm">
+                    {word.examples.map((example, idx) => (
+                      <li key={idx}>{example}</li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Added: {new Date(word.date).toLocaleDateString()}
+                  Added: {new Date(word.dateAdded).toLocaleDateString()}
                 </div>
 
                 {word.learned && (

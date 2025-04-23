@@ -8,6 +8,8 @@ import Sidebar from '@/components/learning/Sidebar';
 import VocabularyTrainer from '@/components/learning/VocabularyTrainer';
 import PronunciationPractice from '@/components/learning/PronunciationPractice';
 import Lessons from '@/components/learning/Lessons';
+import Notebook from '@/components/learning/Notebook';
+import { Language } from '@/components/learning/LanguageSelector';
 import type { FlashCard, Translation } from '@/types/learning';
 import { FaClock, FaChartLine, FaTrophy } from 'react-icons/fa';
 import AuthGuard from '@/components/AuthGuard';
@@ -17,7 +19,7 @@ import FeaturePanel from '@/components/leftPanel/FeaturePanel';
 const USER_ID = 'user123';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
-type ActiveTab = 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons';
+type ActiveTab = 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook';
 
 interface DifficultyOption {
   color: string;
@@ -31,6 +33,11 @@ export default function LearningPage() {
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [translations, setTranslations] = useState<Record<string, Translation>>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>({
+    code: 'es',
+    name: 'Spanish',
+    flag: '🇪🇸'
+  });
 
   const difficultySettings: Record<Difficulty, DifficultyOption> = {
     easy: {
@@ -205,6 +212,13 @@ const renderContent = () => {
             <Lessons userId={USER_ID} />
           </div>
         );
+        
+      case 'notebook':
+        return (
+          <div className="text-white">
+            <Notebook selectedLanguage={selectedLanguage} />
+          </div>
+        );
     default:
         return null;
     }
@@ -215,8 +229,11 @@ const renderContent = () => {
       <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
         <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
         <main className="flex-1 flex flex-col">
-          <div className="p-6 text-white">
-            {renderContent()}
+          <div className="flex h-full">
+            <Sidebar activeTab={activeFeature as ActiveTab} setActiveTab={(tab) => setActiveFeature(tab)} />
+            <div className="flex-1 p-6 text-white">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>

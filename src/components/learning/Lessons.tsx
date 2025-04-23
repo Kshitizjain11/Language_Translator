@@ -1,10 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { FaBookmark, FaStar, FaLanguage } from 'react-icons/fa';
+
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+interface SavedWord {
+  id: string;
+  word: string;
+  translation: string;
+  pronunciation?: string;
+  examples: string[];
+  language: string;
+  dateAdded: string;
+  learned: boolean;
+}
 
 interface Lesson {
   level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Professional';
   title: string;
   vocabulary: { word: string; translation: string; pronunciation?: string; examples: string[] }[];
 }
+
+const languages: Language[] = [
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'it', name: 'Italian', flag: '🇮🇹' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+];
 
 const lessonsData: Lesson[] = [
   {
@@ -121,19 +150,172 @@ const quizQuestions = [
   },
 ];
 
-const Lessons: React.FC<LessonsProps> = () => {
+const Lessons: React.FC<LessonsProps> = ({ userId }) => {
   const [selectedLevel, setSelectedLevel] = useState('Beginner');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(languages[0]);
   const [quizIndex, setQuizIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
+  const [dailyWord, setDailyWord] = useState<SavedWord | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [lastActive, setLastActive] = useState<string>('');
+
+  useEffect(() => {
+    // Load saved words from localStorage
+    const saved = localStorage.getItem('notebook');
+    if (saved) {
+      const parsedWords = JSON.parse(saved);
+      setSavedWords(parsedWords);
+    }
+
+    // Load streak data
+    const streakData = localStorage.getItem('streak');
+    if (streakData) {
+      const { count, lastActiveDate } = JSON.parse(streakData);
+      setStreak(count);
+      setLastActive(lastActiveDate);
+
+      // Check if streak should be updated
+      const today = new Date().toISOString().split('T')[0];
+      if (lastActiveDate !== today) {
+        // Update streak
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        if (lastActiveDate === yesterdayStr) {
+          // Consecutive day, increment streak
+          const newStreak = count + 1;
+          setStreak(newStreak);
+          setLastActive(today);
+          localStorage.setItem('streak', JSON.stringify({ count: newStreak, lastActiveDate: today }));
+        } else {
+          // Streak broken, reset to 1
+          setStreak(1);
+          setLastActive(today);
+          localStorage.setItem('streak', JSON.stringify({ count: 1, lastActiveDate: today }));
+        }
+      }
+    } else {
+      // Initialize streak
+      const today = new Date().toISOString().split('T')[0];
+      setStreak(1);
+      setLastActive(today);
+      localStorage.setItem('streak', JSON.stringify({ count: 1, lastActiveDate: today }));
+    }
+
+    // Set daily word
+    getDailyWord();
+  }, []);
+
+  const getDailyWord = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const storedDailyWord = localStorage.getItem(`dailyWord_${today}`);
+    
+    if (storedDailyWord) {
+      setDailyWord(JSON.parse(storedDailyWord));
+    } else {
+      // Generate a new daily word
+      const randomLesson = lessonsData[Math.floor(Math.random() * lessonsData.length)];
+      const randomWord = randomLesson.vocabulary[Math.floor(Math.random() * randomLesson.vocabulary.length)];
+      
+      const newDailyWord: SavedWord = {
+        id: `daily_${Date.now()}`,
+        word: randomWord.word,
+        translation: randomWord.translation,
+        pronunciation: randomWord.pronunciation,
+        examples: randomWord.examples,
+        language: selectedLanguage.code,
+        dateAdded: today,
+        learned: false
+      };
+      
+      setDailyWord(newDailyWord);
+      localStorage.setItem(`dailyWord_${today}`, JSON.stringify(newDailyWord));
+    }
+  };
+
+  const saveWordToNotebook = (word: { word: string; translation: string; pronunciation?: string; examples: string[] }) => {
+    const newSavedWord: SavedWord = {
+      id: `word_${Date.now()}`,
+      word: word.word,
+      translation: word.translation,
+      pronunciation: word.pronunciation,
+      examples: word.examples,
+      language: selectedLanguage.code,
+      dateAdded: new Date().toISOString().split('T')[0],
+      learned: false
+    };
+
+    const updatedWords = [...savedWords, newSavedWord];
+    setSavedWords(updatedWords);
+    localStorage.setItem('notebook', JSON.stringify(updatedWords));
+
+    // Show toast or notification
+    alert(`"${word.word}" saved to your notebook!`);
+  };
+
+  const handleLanguageChange = (language: Language) => {
+    setSelectedLanguage(language);
+  };
 
   const currentLesson = lessonsData.find((l) => l.level === selectedLevel);
   const quiz = quizQuestions[quizIndex];
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Lessons</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Lessons</h2>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-blue-100 dark:bg-blue-900 px-3 py-1 rounded-lg">
+            <FaStar className="text-yellow-500" />
+            <span className="font-semibold">{streak} day streak</span>
+          </div>
+          
+          <div className="relative">
+            <select 
+              className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg py-2 pl-10 pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedLanguage.code}
+              onChange={(e) => {
+                const lang = languages.find(l => l.code === e.target.value);
+                if (lang) handleLanguageChange(lang);
+              }}
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.flag} {lang.name}
+                </option>
+              ))}
+            </select>
+            <FaLanguage className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          </div>
+        </div>
+      </div>
+      
+      {dailyWord && (
+        <div className="mb-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
+          <h3 className="text-lg font-bold mb-2">🎯 Word of the Day</h3>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-xl font-bold">{dailyWord.word} <span className="text-blue-200">({dailyWord.translation})</span></p>
+              {dailyWord.pronunciation && (
+                <p className="text-sm italic mb-1">{dailyWord.pronunciation}</p>
+              )}
+              <p className="text-sm">Example: {dailyWord.examples[0]}</p>
+            </div>
+            <button 
+              className="bg-white text-blue-600 px-3 py-1 rounded-lg font-medium flex items-center space-x-1 hover:bg-blue-50"
+              onClick={() => saveWordToNotebook(dailyWord)}
+            >
+              <FaBookmark className="text-xs" />
+              <span>Save</span>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex space-x-2 mb-6">
         {['Beginner', 'Intermediate', 'Advanced', 'Professional'].map((level) => (
           <button
@@ -155,7 +337,16 @@ const Lessons: React.FC<LessonsProps> = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {currentLesson.vocabulary.map((vocab, idx) => (
               <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-                <div className="text-lg font-bold mb-2">{vocab.word} <span className="text-blue-500">({vocab.translation})</span></div>
+                <div className="flex justify-between items-start">
+                  <div className="text-lg font-bold mb-2">{vocab.word} <span className="text-blue-500">({vocab.translation})</span></div>
+                  <button 
+                    className="text-gray-400 hover:text-blue-500 transition-colors"
+                    onClick={() => saveWordToNotebook(vocab)}
+                    title="Save to notebook"
+                  >
+                    <FaBookmark />
+                  </button>
+                </div>
                 {vocab.pronunciation && (
                   <div className="text-sm text-gray-500 mb-2">Pronunciation: <span className="italic">{vocab.pronunciation}</span></div>
                 )}

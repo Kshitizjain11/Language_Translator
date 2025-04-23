@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { FaChartLine, FaLayerGroup, FaQuestionCircle, FaBook, FaMicrophone } from 'react-icons/fa';
+import { FaChartLine, FaLayerGroup, FaQuestionCircle, FaBook, FaMicrophone, FaBookmark } from 'react-icons/fa';
 
 interface SidebarProps {
-  activeTab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons';
-  setActiveTab: (tab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons') => void;
+  activeTab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook';
+  setActiveTab: (tab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook') => void;
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
@@ -39,6 +39,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'pronunciation',
       label: 'Pronunciation Practice',
       icon: <FaMicrophone />,
+    },
+    {
+      id: 'notebook',
+      label: 'My Notebook',
+      icon: <FaBookmark />,
     },
   ] as const;
 
