@@ -4,9 +4,12 @@ import { FaClock, FaStar, FaCheck, FaTimes } from 'react-icons/fa';
 interface Question {
   id: number;
   text: string;
-  options: string[];
-  correctAnswer: string;
-  translation: string;
+  options: {
+    text: string;
+    image: string;
+    isCorrect: boolean;
+  }[];
+  explanation: string;
 }
 
 interface QuizProps {
@@ -64,28 +67,45 @@ export default function Quiz({ userId, difficulty, sourceLang, targetLang, onCom
       const quizQuestions: Question[] = [];
       const numQuestions = DIFFICULTY_SETTINGS[difficulty].questions;
       
+      // Sample image paths (in a real app, these would come from your assets)
+      const sampleImages = [
+        '/images/apple.png',
+        '/images/book.png',
+        '/images/dog.png',
+        '/images/cat.png',
+        '/images/house.png',
+        '/images/car.png',
+      ];
+      
       // Select random translations based on difficulty
       for (let i = 0; i < numQuestions && i < translations.length; i++) {
         const translation = translations[i];
         const otherTranslations = translations.filter((t: { id: string; targetText: string; sourceText: string }) => t.id !== translation.id);
         
-        // Generate 3 random incorrect options
-        const options = [translation.targetText];
-        while (options.length < 4 && otherTranslations.length > 0) {
-          const randomIndex = Math.floor(Math.random() * otherTranslations.length);
-          const option = otherTranslations[randomIndex].targetText;
-          if (!options.includes(option)) {
-            options.push(option);
-          }
-          otherTranslations.splice(randomIndex, 1);
+        // Create options with images
+        const correctOption = {
+          text: translation.targetText,
+          image: sampleImages[i % sampleImages.length],
+          isCorrect: true
+        };
+        
+        const incorrectOptions = [];
+        for (let j = 0; j < 2 && j < otherTranslations.length; j++) {
+          incorrectOptions.push({
+            text: otherTranslations[j].targetText,
+            image: sampleImages[(i + j + 1) % sampleImages.length],
+            isCorrect: false
+          });
         }
+        
+        // Combine and shuffle options
+        const options = shuffleArray([correctOption, ...incorrectOptions]);
 
         quizQuestions.push({
           id: i + 1,
-          text: translation.sourceText,
-          options: shuffleArray(options),
-          correctAnswer: translation.targetText,
-          translation: translation.targetText
+          text: `Which one of these is "${translation.sourceText}"?`,
+          options: options,
+          explanation: `"${correctOption.text}" means "${translation.sourceText}" in ${targetLang === 'es' ? 'Spanish' : targetLang === 'fr' ? 'French' : 'the target language'}.`
         });
       }
 
@@ -111,23 +131,41 @@ export default function Quiz({ userId, difficulty, sourceLang, targetLang, onCom
     }
   }, [timeLeft, isQuizComplete]);
 
-  const handleAnswerSelect = (answer: string) => {
-    setSelectedAnswer(answer);
+  const handleAnswerSelect = (index: number) => {
+    setSelectedAnswer(index.toString());
+  };
+
+  const handleCheckAnswer = async () => {
     setShowAnswer(true);
 
-    if (answer === questions[currentQuestionIndex].correctAnswer) {
-      setScore(prev => prev + 1);
+    // Check if answer is correct
+    const selectedOption = currentQuestion.options[parseInt(selectedAnswer)];
+    const isCorrect = selectedOption.isCorrect;
+    if (isCorrect) {
+      setScore(score + 1);
     }
 
-    setTimeout(() => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setSelectedAnswer('');
-        setShowAnswer(false);
-      } else {
-        handleQuizComplete();
-      }
-    }, 1500);
+    // Wait 2 seconds before moving to next question
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Move to next question or end quiz
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer('');
+      setShowAnswer(false);
+    } else {
+      handleQuizComplete();
+    }
+  };
+
+  const handleSkip = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer('');
+      setShowAnswer(false);
+    } else {
+      handleQuizComplete();
+    }
   };
 
   const handleQuizComplete = () => {
@@ -209,43 +247,66 @@ export default function Quiz({ userId, difficulty, sourceLang, targetLang, onCom
       </div>
 
       <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Translate: "{currentQuestion.text}"
+        <h3 className="text-xl font-semibold mb-4 text-center text-gray-900 dark:text-white">
+          {currentQuestion.text}
         </h3>
-        <div className="space-y-3">
+        
+        <div className="flex justify-center gap-6 mb-6">
           {currentQuestion.options.map((option, index) => (
             <button
               key={index}
-              onClick={() => !showAnswer && handleAnswerSelect(option)}
+              onClick={() => !showAnswer && handleAnswerSelect(index)}
               disabled={showAnswer}
-              className={`w-full p-4 rounded-lg text-left transition-colors ${
+              className={`w-40 h-48 flex flex-col items-center justify-center rounded-xl shadow-lg border-2 transition-all p-4 ${
                 showAnswer
-                  ? option === currentQuestion.correctAnswer
-                    ? 'bg-green-100 dark:bg-green-800 border-green-500'
-                    : option === selectedAnswer
-                    ? 'bg-red-100 dark:bg-red-800 border-red-500'
-                    : 'bg-gray-100 dark:bg-gray-700'
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-              } border-2 ${
-                showAnswer && option === selectedAnswer
-                  ? option === currentQuestion.correctAnswer
-                    ? 'border-green-500'
-                    : 'border-red-500'
-                  : 'border-transparent'
+                  ? option.isCorrect
+                    ? 'border-green-500 bg-green-100 dark:bg-green-800'
+                    : selectedAnswer === index.toString()
+                    ? 'border-red-500 bg-red-100 dark:bg-red-800'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'
+                  : selectedAnswer === index.toString()
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-blue-50 dark:hover:bg-blue-900'
               }`}
             >
-              <div className="flex justify-between items-center">
-                <span className="text-gray-900 dark:text-white">{option}</span>
-                {showAnswer && option === currentQuestion.correctAnswer && (
-                  <FaCheck className="text-green-500 h-5 w-5" />
-                )}
-                {showAnswer && option === selectedAnswer && option !== currentQuestion.correctAnswer && (
-                  <FaTimes className="text-red-500 h-5 w-5" />
-                )}
-              </div>
+              <img src={option.image} alt={option.text} className="w-20 h-20 object-contain mb-2" />
+              <span className="font-semibold text-lg text-gray-900 dark:text-white">{option.text}</span>
+              {showAnswer && option.isCorrect && (
+                <FaCheck className="text-green-500 h-5 w-5 mt-2" />
+              )}
+              {showAnswer && selectedAnswer === index.toString() && !option.isCorrect && (
+                <FaTimes className="text-red-500 h-5 w-5 mt-2" />
+              )}
             </button>
           ))}
         </div>
+
+        <div className="flex justify-center mt-4 gap-4">
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold disabled:opacity-50 hover:bg-blue-700"
+            onClick={handleCheckAnswer}
+            disabled={!selectedAnswer || showAnswer}
+          >
+            Check
+          </button>
+          <button
+            className="px-6 py-2 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500"
+            onClick={handleSkip}
+          >
+            Skip
+          </button>
+        </div>
+
+        {showAnswer && (
+          <div className="mt-4 text-center">
+            {currentQuestion.options[parseInt(selectedAnswer)]?.isCorrect ? (
+              <div className="text-green-600 font-bold dark:text-green-400">Correct! 🎉</div>
+            ) : (
+              <div className="text-red-600 font-bold dark:text-red-400">Wrong. 😢</div>
+            )}
+            <div className="text-gray-700 dark:text-gray-300 mt-2">{currentQuestion.explanation}</div>
+          </div>
+        )}
       </div>
 
       <div className="mt-6 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

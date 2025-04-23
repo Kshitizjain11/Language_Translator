@@ -7,6 +7,7 @@ import ProgressReport from '@/components/learning/ProgressReport';
 import Sidebar from '@/components/learning/Sidebar';
 import VocabularyTrainer from '@/components/learning/VocabularyTrainer';
 import PronunciationPractice from '@/components/learning/PronunciationPractice';
+import Lessons from '@/components/learning/Lessons';
 import type { FlashCard, Translation } from '@/types/learning';
 import { FaClock, FaChartLine, FaTrophy } from 'react-icons/fa';
 import AuthGuard from '@/components/AuthGuard';
@@ -16,7 +17,7 @@ import FeaturePanel from '@/components/leftPanel/FeaturePanel';
 const USER_ID = 'user123';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
-type ActiveTab = 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation';
+type ActiveTab = 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons';
 
 interface DifficultyOption {
   color: string;
@@ -114,7 +115,7 @@ export default function LearningPage() {
     }
   };
 
-  const renderContent = () => {
+const renderContent = () => {
     switch (activeFeature) {
       case 'progress':
         return (
@@ -198,7 +199,13 @@ export default function LearningPage() {
           </div>
         );
 
-      default:
+      case 'lessons':
+        return (
+          <div className="text-white">
+            <Lessons userId={USER_ID} />
+          </div>
+        );
+    default:
         return null;
     }
   };

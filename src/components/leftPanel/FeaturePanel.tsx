@@ -18,7 +18,10 @@ interface FeaturePanelProps {
   setActiveFeature: (feature: string) => void;
 }
 
+import { useRouter } from 'next/navigation';
+
 export default function FeaturePanel({ activeFeature, setActiveFeature }: FeaturePanelProps) {
+  const router = useRouter();
   const features = [
     { id: 'translator', name: 'Translator', icon: <FaLanguage className="w-5 h-5" /> },
     { id: 'grammar', name: 'Grammar Check', icon: <FaSpellCheck className="w-5 h-5" /> },
@@ -40,7 +43,13 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
           {features.map((feature) => (
             <li key={feature.id}>
               <button
-                onClick={() => setActiveFeature(feature.id)}
+                onClick={() => {
+                  if (feature.id === 'learning') {
+                    router.push('/learning');
+                  } else {
+                    setActiveFeature(feature.id);
+                  }
+                }}
                 className={`flex items-center w-full px-4 py-3 text-left transition-colors ${
                   activeFeature === feature.id
                     ? 'bg-white/20 text-white border-r-4 border-white'

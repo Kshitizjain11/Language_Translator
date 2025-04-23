@@ -4,8 +4,8 @@ import React from 'react';
 import { FaChartLine, FaLayerGroup, FaQuestionCircle, FaBook, FaMicrophone } from 'react-icons/fa';
 
 interface SidebarProps {
-  activeTab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation';
-  setActiveTab: (tab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation') => void;
+  activeTab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons';
+  setActiveTab: (tab: 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons') => void;
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
@@ -14,6 +14,11 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       id: 'progress',
       label: 'Progress History',
       icon: <FaChartLine />,
+    },
+    {
+      id: 'lessons',
+      label: 'Lessons',
+      icon: <FaBook />,
     },
     {
       id: 'flashcards',
