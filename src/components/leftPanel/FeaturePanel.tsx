@@ -16,11 +16,13 @@ import {
 interface FeaturePanelProps {
   activeFeature: string;
   setActiveFeature: (feature: string) => void;
+  onLearningHoverStart?: () => void;
+  onLearningHoverEnd?: () => void;
 }
 
 import { useRouter } from 'next/navigation';
 
-export default function FeaturePanel({ activeFeature, setActiveFeature }: FeaturePanelProps) {
+export default function FeaturePanel({ activeFeature, setActiveFeature, onLearningHoverStart, onLearningHoverEnd }: FeaturePanelProps) {
   const router = useRouter();
   const features = [
     { id: 'translator', name: 'Translator', icon: <FaLanguage className="w-5 h-5" /> },
@@ -50,6 +52,10 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
                     setActiveFeature(feature.id);
                   }
                 }}
+                onMouseEnter={feature.id === 'learning' ? onLearningHoverStart : undefined}
+                onFocus={feature.id === 'learning' ? onLearningHoverStart : undefined}
+                onMouseLeave={feature.id === 'learning' ? onLearningHoverEnd : undefined}
+                onBlur={feature.id === 'learning' ? onLearningHoverEnd : undefined}
                 className={`flex items-center w-full px-4 py-3 text-left transition-colors ${
                   activeFeature === feature.id
                     ? 'bg-white/20 text-white border-r-4 border-white'

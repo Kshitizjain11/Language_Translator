@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Flashcard from '@/components/learning/Flashcard';
 import Quiz from '@/components/learning/Quiz';
 import ProgressReport from '@/components/learning/ProgressReport';
@@ -29,6 +29,20 @@ interface DifficultyOption {
 }
 
 export default function LearningPage() {
+  const [learningSidebarOpen, setLearningSidebarOpen] = useState(false);
+  // Timer for delayed sidebar hide
+  const hideTimer = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Show sidebar immediately
+  const handleSidebarShow = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setLearningSidebarOpen(true);
+  };
+  // Hide sidebar with a slight delay
+  const handleSidebarHide = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setLearningSidebarOpen(false), 180);
+  };
   const [activeFeature, setActiveFeature] = useState<string>('progress');
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
   const [translations, setTranslations] = useState<Record<string, Translation>>({});
@@ -227,11 +241,31 @@ const renderContent = () => {
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-        <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
+        <FeaturePanel 
+          activeFeature={activeFeature} 
+          setActiveFeature={setActiveFeature}
+          onLearningHoverStart={handleSidebarShow}
+          onLearningHoverEnd={handleSidebarHide}
+        />
         <main className="flex-1 flex flex-col">
-          <div className="flex h-full">
-            <Sidebar activeTab={activeFeature as ActiveTab} setActiveTab={(tab) => setActiveFeature(tab)} />
-            <div className="flex-1 p-6 text-white">
+          <div className="flex h-full relative">
+            {/* Hover bridge: invisible div between button and sidebar */}
+            <div
+              className="absolute left-64 top-0 h-48 z-30"
+              style={{ width: '18px' }}
+              onMouseEnter={handleSidebarShow}
+              onMouseLeave={handleSidebarHide}
+            />
+            <div className="absolute left-0 top-0 h-full z-20" style={{ width: '16rem' }}>
+              <Sidebar 
+                activeTab={activeFeature as ActiveTab} 
+                setActiveTab={(tab) => setActiveFeature(tab)}
+                onLearningHoverStart={handleSidebarShow}
+                onLearningHoverEnd={handleSidebarHide}
+                visible={learningSidebarOpen}
+              />
+            </div>
+            <div className="flex-1 p-6 text-white ml-8">
               {renderContent()}
             </div>
           </div>

@@ -148,9 +148,13 @@ const Notebook: React.FC<NotebookProps> = ({ selectedLanguage }) => {
                 <div className="mt-2 text-gray-700 dark:text-gray-300">
                   <span className="font-semibold">Examples:</span>
                   <ul className="list-disc pl-5 text-sm">
-                    {word.examples.map((example, idx) => (
-                      <li key={idx}>{example}</li>
-                    ))}
+                    {word.examples && word.examples.length > 0 ? (
+                      word.examples.map((example, idx) => (
+                        <li key={idx}>{example}</li>
+                      ))
+                    ) : (
+                      <li>No examples available</li>
+                    )}
                   </ul>
                 </div>
 
