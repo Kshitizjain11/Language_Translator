@@ -12,47 +12,23 @@ interface Message {
   timestamp: Date;
 }
 
-const RESPONSES = {
-  [RESPONSE_TYPES.GREETING]: [
-    "Hello! I'm your language learning assistant. How can I help you today?",
-    "Hi there! I'm here to help with your language learning journey. What would you like to know?",
-    "Greetings! I'm your language learning companion. What can I assist you with?"
-  ],
-  [RESPONSE_TYPES.GRAMMAR]: [
-    "Let me help you with grammar. Could you provide the specific sentence or phrase you'd like to check?",
-    "I can help explain grammar rules. What specific grammar question do you have?",
-    "Grammar is important! What would you like to know about grammar?"
-  ],
-  [RESPONSE_TYPES.MEANING]: [
-    "I can help explain word meanings. Which word would you like to understand better?",
-    "Let's explore word meanings together. What word are you curious about?",
-    "Understanding word meanings is crucial. What word would you like me to explain?"
-  ],
-  [RESPONSE_TYPES.LEARNING]: [
-    "Here are some effective language learning tips:\n1. Practice daily\n2. Use flashcards\n3. Listen to native speakers\n4. Read in your target language\n5. Practice speaking with others",
-    "To improve your language skills:\n1. Set specific goals\n2. Use language learning apps\n3. Watch movies in the target language\n4. Keep a vocabulary notebook\n5. Find a language partner",
-    "Try these learning strategies:\n1. Immerse yourself in the language\n2. Use spaced repetition\n3. Practice speaking out loud\n4. Learn common phrases first\n5. Don't be afraid to make mistakes"
-  ],
-  [RESPONSE_TYPES.TRANSLATION]: [
-    "For translations, please use the translator tool in the main interface. I can help explain the translations or provide additional context!",
-    "The translator tool is best for direct translations. I can help you understand the nuances of the translation!",
-    "Use the translator tool for direct translations. I'm here to help you understand the cultural context and usage!"
-  ],
-  [RESPONSE_TYPES.DEFAULT]: [
-    "I'm here to help with your language learning journey! You can ask me about meanings, grammar, learning tips, or anything else language-related.",
-    "I can assist you with various language learning topics. What would you like to know?",
-    "Feel free to ask me anything about language learning, grammar, or vocabulary!"
-  ]
-};
-
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [botTypingText, setBotTypingText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Determine selected language from localStorage or default to 'English'
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  useEffect(() => {
+    // Try to get language from localStorage (used by translator)
+    const lang = localStorage.getItem('selectedTargetLangName');
+    if (lang) setSelectedLanguage(lang);
+  }, []);
 
   // Load chat history from localStorage on component mount
   useEffect(() => {
@@ -83,33 +59,6 @@ export default function ChatBot() {
     }
   }, [input]);
 
-  const getRandomResponse = (type: string) => {
-    const responses = RESPONSES[type as keyof typeof RESPONSES] || RESPONSES[RESPONSE_TYPES.DEFAULT];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const determineResponseType = (message: string): string => {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.match(/^(hi|hello|hey|greetings)/)) {
-      return RESPONSE_TYPES.GREETING;
-    }
-    if (lowerMessage.includes('grammar') || lowerMessage.includes('sentence') || lowerMessage.includes('phrase')) {
-      return RESPONSE_TYPES.GRAMMAR;
-    }
-    if (lowerMessage.includes('meaning') || lowerMessage.includes('word') || lowerMessage.includes('vocabulary')) {
-      return RESPONSE_TYPES.MEANING;
-    }
-    if (lowerMessage.includes('learn') || lowerMessage.includes('study') || lowerMessage.includes('practice')) {
-      return RESPONSE_TYPES.LEARNING;
-    }
-    if (lowerMessage.includes('translate') || lowerMessage.includes('translation')) {
-      return RESPONSE_TYPES.TRANSLATION;
-    }
-    
-    return RESPONSE_TYPES.DEFAULT;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -124,30 +73,41 @@ export default function ChatBot() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    setBotTypingText('');
 
     try {
-      // Convert message history to the format expected by generateResponse
-      const messageHistory = messages.map(msg => 
-        `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
-      );
-      
-      const response = await generateResponse(input, messageHistory);
-      const botMessage: Message = {
+      // POST to our Groq API endpoint
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input, language: selectedLanguage })
+      });
+      const data = await res.json();
+      let reply = data.reply || 'Sorry, I could not generate a response.';
+
+      // Typing animation logic
+      let displayText = '';
+      for (let i = 0; i < reply.length; i++) {
+        displayText += reply[i];
+        setBotTypingText(displayText);
+        // 15ms per character for smooth typing
+        await new Promise(resolve => setTimeout(resolve, 15));
+      }
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
-        text: response,
+        text: reply,
         sender: 'bot',
         timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
+      }]);
+      setBotTypingText('');
     } catch (error) {
-      console.error('Error generating response:', error);
-      const errorMessage: Message = {
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
-        text: "I apologize, but I encountered an error while processing your request. Could you please try again?",
+        text: 'Sorry, there was an error connecting to the AI.',
         sender: 'bot',
         timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
+      setBotTypingText('');
     } finally {
       setIsTyping(false);
     }
@@ -217,9 +177,11 @@ export default function ChatBot() {
             ))}
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-gray-800 rounded-lg p-3 flex items-center space-x-2">
+                <div className="bg-gray-800 rounded-lg p-3 flex items-center space-x-2 min-h-[2.5rem]">
                   <FaSpinner className="animate-spin" />
-                  <span className="text-sm text-gray-400">AI is typing...</span>
+                  <span className="text-sm text-gray-400">
+                    {botTypingText ? botTypingText : 'AI is typing...'}
+                  </span>
                 </div>
               </div>
             )}
