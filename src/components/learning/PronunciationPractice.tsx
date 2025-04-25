@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { FaMicrophone, FaPlay, FaStop, FaVolumeUp } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { FaMicrophone, FaPlay, FaStop, FaVolumeUp, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 interface PhraseData {
   id: string;
@@ -11,15 +11,58 @@ interface PhraseData {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
 }
 
+interface FeedbackData {
+  score: number;
+  suggestions: string[];
+}
+
 export default function PronunciationPractice({ userId }: { userId: string }) {
   const [phrases, setPhrases] = useState<PhraseData[]>([]);
   const [currentPhrase, setCurrentPhrase] = useState<PhraseData | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [feedback, setFeedback] = useState<string>('');
+  const [feedback, setFeedback] = useState<FeedbackData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    fetchPhrases();
+  }, [userId]);
+
+  const fetchPhrases = async () => {
+    try {
+      const response = await fetch(`/api/learning/pronunciation/phrases?userId=${userId}`);
+      const data = await response.json();
+      setPhrases(data.phrases);
+      if (data.phrases.length > 0) {
+        setCurrentPhrase(data.phrases[0]);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching phrases:', error);
+      setLoading(false);
+    }
+  };
+
+  const goToNextPhrase = () => {
+    if (currentIndex < phrases.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setCurrentPhrase(phrases[currentIndex + 1]);
+      setFeedback(null);
+      setAudioBlob(null);
+    }
+  };
+
+  const goToPreviousPhrase = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setCurrentPhrase(phrases[currentIndex - 1]);
+      setFeedback(null);
+      setAudioBlob(null);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -41,7 +84,7 @@ export default function PronunciationPractice({ userId }: { userId: string }) {
       setIsRecording(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      setFeedback('Error: Could not access microphone. Please check your permissions.');
+      setFeedback({ score: 0, suggestions: [] });
     }
   };
 
@@ -80,77 +123,120 @@ export default function PronunciationPractice({ userId }: { userId: string }) {
       });
 
       const data = await response.json();
-      setFeedback(data.feedback);
+      setFeedback(data);
     } catch (error) {
       console.error('Error analyzing pronunciation:', error);
-      setFeedback('Error analyzing pronunciation. Please try again.');
+      setFeedback({ score: 0, suggestions: [] });
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        {currentPhrase ? (
-          <>
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold mb-2">{currentPhrase.text}</h3>
-              <p className="text-gray-600">{currentPhrase.translation}</p>
-            </div>
-
-            <div className="flex justify-center space-x-4 mb-8">
-              <button
-                onClick={playOriginal}
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                <FaVolumeUp className="inline-block mr-2" />
-                Listen
-              </button>
-
-              <button
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`px-6 py-3 rounded-lg transition-colors ${
-                  isRecording
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-green-500 hover:bg-green-600'
-                } text-white`}
-              >
-                {isRecording ? (
-                  <>
-                    <FaStop className="inline-block mr-2" />
-                    Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <FaMicrophone className="inline-block mr-2" />
-                    Start Recording
-                  </>
-                )}
-              </button>
-
-              {audioBlob && (
-                <button
-                  onClick={playRecording}
-                  className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
-                >
-                  <FaPlay className="inline-block mr-2" />
-                  Play Recording
-                </button>
-              )}
-            </div>
-
-            {feedback && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">Feedback:</h4>
-                <p className="text-gray-700">{feedback}</p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-600">No phrases available. Please check back later.</p>
-          </div>
-        )}
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-blue-400"></div>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col space-y-6 p-4">
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
+        </div>
+      ) : (
+        <>
+          {currentPhrase && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-center mb-4">
+                <button
+                  onClick={goToPreviousPhrase}
+                  disabled={currentIndex === 0}
+                  className={`p-2 rounded-full ${
+                    currentIndex === 0
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-blue-500 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FaArrowLeft />
+                </button>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Practice Phrase</h3>
+                <button
+                  onClick={goToNextPhrase}
+                  disabled={currentIndex === phrases.length - 1}
+                  className={`p-2 rounded-full ${
+                    currentIndex === phrases.length - 1
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-blue-500 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FaArrowRight />
+                </button>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 mb-4">{currentPhrase.text}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">{currentPhrase.translation}</p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={playOriginal}
+                  className="flex items-center px-4 py-2 text-sm text-blue-500 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-gray-700 rounded-full transition-colors"
+                >
+                  <FaVolumeUp className="mr-2" />
+                  Listen to Pronunciation
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`px-6 py-2 rounded-full font-medium transition-colors flex items-center ${
+                isRecording
+                  ? 'bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-700'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700'
+              }`}
+            >
+              {isRecording ? <FaStop className="mr-2" /> : <FaMicrophone className="mr-2" />}
+              {isRecording ? 'Stop Recording' : 'Start Recording'}
+            </button>
+            {audioBlob && (
+              <button
+                onClick={playRecording}
+                className="px-6 py-2 rounded-full font-medium bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-700 transition-colors flex items-center"
+              >
+                <FaPlay className="mr-2" />
+                Play Recording
+              </button>
+            )}
+          </div>
+
+          {feedback && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Feedback</h3>
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700 dark:text-gray-300">Accuracy Score:</span>
+                  <span className={`font-semibold ${
+                    feedback.score >= 80 ? 'text-green-500 dark:text-green-400' :
+                    feedback.score >= 60 ? 'text-yellow-500 dark:text-yellow-400' :
+                    'text-red-500 dark:text-red-400'
+                  }`}>
+                    {feedback.score}%
+                  </span>
+                </div>
+                <div className="mt-4">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Areas for Improvement:</h4>
+                  <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400">
+                    {feedback.suggestions.map((suggestion, index) => (
+                      <li key={index}>{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 } 

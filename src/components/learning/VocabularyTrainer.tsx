@@ -88,22 +88,22 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 dark:border-blue-400"></div>
       </div>
     );
   }
 
   if (!currentWord) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl shadow-lg">
-        <FaBook className="mx-auto h-12 w-12 text-blue-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">All Caught Up!</h2>
-        <p className="text-gray-600 mb-6">
+      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+        <FaBook className="mx-auto h-12 w-12 text-blue-500 dark:text-blue-400 mb-4" />
+        <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">All Caught Up!</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
           No words due for review. Great job keeping up with your studies!
         </p>
         <button
           onClick={() => fetchVocabulary()}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
         >
           <FaRedo className="inline-block mr-2" />
           Check Again
@@ -122,8 +122,8 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
             onClick={() => setSelectedCategory(category)}
             className={`px-4 py-2 rounded-full whitespace-nowrap ${
               selectedCategory === category
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -132,36 +132,36 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
       </div>
 
       {/* Word Card */}
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-        <h3 className="text-2xl font-bold mb-4">{currentWord.word}</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+        <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{currentWord.word}</h3>
         
         {!showTranslation ? (
           <button
             onClick={() => setShowTranslation(true)}
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            className="bg-blue-500 dark:bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             Show Translation
           </button>
         ) : (
           <div className="space-y-6">
-            <p className="text-xl text-gray-700">{currentWord.translation}</p>
+            <p className="text-xl text-gray-700 dark:text-gray-300">{currentWord.translation}</p>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={() => handleDifficultyResponse(1)}
-                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600"
+                className="bg-green-500 dark:bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-green-700"
               >
                 <FaCheck className="inline-block mr-2" />
                 Easy
               </button>
               <button
                 onClick={() => handleDifficultyResponse(3)}
-                className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600"
+                className="bg-yellow-500 dark:bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 dark:hover:bg-yellow-700"
               >
                 Medium
               </button>
               <button
                 onClick={() => handleDifficultyResponse(5)}
-                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600"
+                className="bg-red-500 dark:bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700"
               >
                 <FaTimes className="inline-block mr-2" />
                 Hard
@@ -170,7 +170,7 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
           </div>
         )}
 
-        <div className="mt-6 text-sm text-gray-500">
+        <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
           Category: {currentWord.category}
         </div>
       </div>
