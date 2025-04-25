@@ -27,7 +27,7 @@ export async function generateResponse(message: string, history: string[]): Prom
         messages: [
           {
             role: 'system',
-            content: 'You are an advanced AI assistant. When users enable auto-translate, warn them that their translation history will not be saved. Keep responses concise and helpful. You can use markdown formatting when appropriate.'
+            content: 'You are Lumi, an advanced AI language learning assistant. When users enable auto-translate, warn them that their translation history will not be saved. Keep responses concise and helpful. You can use markdown formatting when appropriate.'
           },
           ...history.map(msg => ({
             role: msg.startsWith('User:') ? 'user' : 'assistant',

@@ -144,7 +144,7 @@ export default function ChatBot() {
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-t-lg flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <FaRobot className="text-xl" />
-              <h3 className="font-semibold">AI Assistant</h3>
+              <h3 className="font-semibold">Lumi</h3>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -155,7 +155,7 @@ export default function ChatBot() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900">
             {messages.map((message) => (
               <div
                 key={message.id}

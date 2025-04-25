@@ -44,4 +44,6 @@ export const RESPONSES = {
     "I'll do my best to assist you. What's on your mind?",
     "Feel free to ask me anything!"
   ]
-} as const; 
+} as const;
+
+export const INITIAL_MESSAGE = "Hi! I'm Lumi, your AI language learning assistant. How can I help you today?"; 

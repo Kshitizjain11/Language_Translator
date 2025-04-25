@@ -7,12 +7,12 @@ export async function POST(req: NextRequest) {
   const model = 'llama3-8b-8192';
   const url = 'https://api.groq.com/openai/v1/chat/completions';
 
-  const prompt = `You are a helpful AI assistant. Reply in ${language}.\nUser: ${message}`;
+  const prompt = `You are Lumi, a helpful language learning assistant. Reply in ${language}.\nUser: ${message}`;
 
   const payload = {
     model,
     messages: [
-      { role: 'system', content: `You are a helpful AI assistant. Reply in ${language}.` },
+      { role: 'system', content: `You are Lumi, a helpful language learning assistant. Reply in ${language}.` },
       { role: 'user', content: message }
     ],
     max_tokens: 512,

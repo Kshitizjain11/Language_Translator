@@ -808,7 +808,7 @@ export default function Home() {
                   targetLang="es"
                   onComplete={handleQuizComplete}
                 />
-              )}
+                  )}
             </div>
           </div>
         );
