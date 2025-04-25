@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, Suspense } from 'react'
-import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun, FaSync, FaSearch } from 'react-icons/fa'
+import { FaMicrophone, FaVolumeUp, FaCopy, FaDownload, FaMoon, FaSun, FaSync, FaSearch, FaClock, FaChartLine, FaTrophy } from 'react-icons/fa'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import TranslationHistoryPanel from '@/components/learning/TranslationHistoryPanel';
@@ -15,6 +15,14 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
 import LearningMode from '@/components/learning/LearningMode'
 import LearningDashboard from '@/components/learning/LearningDashboard'
+import ProgressReport from '@/components/learning/ProgressReport';
+import Flashcard from '@/components/learning/Flashcard';
+import Quiz from '@/components/learning/Quiz';
+import VocabularyTrainer from '@/components/learning/VocabularyTrainer';
+import PronunciationPractice from '@/components/learning/PronunciationPractice';
+import Lessons from '@/components/learning/Lessons';
+import Notebook from '@/components/learning/Notebook';
+import type { Translation, FlashCard } from '@/types/learning';
 
 interface Language {
   code: string;
@@ -93,7 +101,7 @@ const languages: Language[] = [
   { code: 'ne', name: 'Nepali', flag: '🇳🇵', display: '🇳🇵 Nepali' },
   { code: 'no', name: 'Norwegian', flag: '🇳🇴', display: '🇳🇴 Norwegian' },
   { code: 'ny', name: 'Nyanja (Chichewa)', flag: '🇲🇼', display: '🇲🇼 Nyanja (Chichewa)' },
-  { code: 'or', name: 'Odia (Oriya)', flag: '🇮🇳', display: '🇮🇳 Odia (Oriya)' },
+  { code: 'or', name: 'Odia (Oriya)', flag: '��🇳', display: '🇮🇳 Odia (Oriya)' },
   { code: 'ps', name: 'Pashto', flag: '🇦🇫', display: '🇦🇫 Pashto' },
   { code: 'fa', name: 'Persian', flag: '🇮🇷', display: '🇮🇷 Persian' },
   { code: 'pl', name: 'Polish', flag: '🇵🇱', display: '🇵🇱 Polish' },
@@ -102,7 +110,7 @@ const languages: Language[] = [
   { code: 'ro', name: 'Romanian', flag: '🇷🇴', display: '🇷🇴 Romanian' },
   { code: 'ru', name: 'Russian', flag: '🇷🇺', display: '🇷🇺 Russian' },
   { code: 'sm', name: 'Samoan', flag: '🇼🇸', display: '🇼🇸 Samoan' },
-  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧����󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
+  { code: 'gd', name: 'Scots Gaelic', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', display: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scots Gaelic' },
   { code: 'sr', name: 'Serbian', flag: '🇷🇸', display: '🇷🇸 Serbian' },
   { code: 'st', name: 'Sesotho', flag: '🇱🇸', display: '🇱🇸 Sesotho' },
   { code: 'sn', name: 'Shona', flag: '🇿🇼', display: '🇿🇼 Shona' },
@@ -128,7 +136,7 @@ const languages: Language[] = [
   { code: 'ug', name: 'Uyghur', flag: '🇨🇳', display: '🇨🇳 Uyghur' },
   { code: 'uz', name: 'Uzbek', flag: '🇺🇿', display: '🇺🇿 Uzbek' },
   { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', display: '🇻🇳 Vietnamese' },
-  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷��󠁳󠁿', display: '��󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
+  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', display: '🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh' },
   { code: 'xh', name: 'Xhosa', flag: '🇿🇦', display: '🇿🇦 Xhosa' },
   { code: 'yi', name: 'Yiddish', flag: '🌍', display: '🌍 Yiddish' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬', display: '🇳🇬 Yoruba' },
@@ -242,26 +250,83 @@ const LanguageSelector = ({
   )
 }
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+type Feature = 'translator' | 'grammar' | 'dictionary' | 'summarizer' | 'paraphraser' | 'history' | 'learning' | 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook';
+type LearningTab = 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook';
+
+interface DifficultyOption {
+  color: string;
+  hoverColor: string;
+  icon: JSX.Element;
+  description: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+
 export default function Home() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeFeature, setActiveFeature] = useState('translator');
-  const [inputText, setInputText] = useState('')
-  const [outputText, setOutputText] = useState('')
-  const [sourceLang, setSourceLang] = useState('auto')
-  const [targetLang, setTargetLang] = useState('es')
-  const [isLoading, setIsLoading] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [isAutoTranslate, setIsAutoTranslate] = useState(false)
-  const [detectedLang, setDetectedLang] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false)
-  const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false)
-  const sourceDropdownRef = useRef<HTMLDivElement>(null)
-  const targetDropdownRef = useRef<HTMLDivElement>(null)
+  const [activeFeature, setActiveFeature] = useState<Feature>('translator');
+  const [inputText, setInputText] = useState('');
+  const [outputText, setOutputText] = useState('');
+  const [sourceLang, setSourceLang] = useState('auto');
+  const [targetLang, setTargetLang] = useState('es');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isAutoTranslate, setIsAutoTranslate] = useState(false);
+  const [detectedLang, setDetectedLang] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
+  const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false);
+  const sourceDropdownRef = useRef<HTMLDivElement>(null);
+  const targetDropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const [isRotating, setIsRotating] = useState(false)
-  const [activeTab, setActiveTab] = useState<'translate' | 'learn'>('translate')
+  const [isRotating, setIsRotating] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationHistory, setTranslationHistory] = useState<Translation[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
+  const [translations, setTranslations] = useState<Record<string, Translation>>({});
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>({
+    code: 'es',
+    name: 'Spanish',
+    flag: '🇪🇸',
+    display: '🇪🇸 Spanish'
+  });
+
+  const difficultySettings: Record<Difficulty, DifficultyOption> = {
+    easy: {
+      color: 'bg-green-500',
+      hoverColor: 'hover:bg-green-600',
+      icon: <FaClock className="h-6 w-6" />,
+      description: '5 questions • 30 seconds per question • Basic translations'
+    },
+    medium: {
+      color: 'bg-yellow-500',
+      hoverColor: 'hover:bg-yellow-600',
+      icon: <FaChartLine className="h-6 w-6" />,
+      description: '10 questions • 45 seconds per question • Intermediate phrases'
+    },
+    hard: {
+      color: 'bg-red-500',
+      hoverColor: 'hover:bg-red-600',
+      icon: <FaTrophy className="h-6 w-6" />,
+      description: '15 questions • 60 seconds per question • Advanced sentences'
+    }
+  };
 
   useEffect(() => {
     // Check if user is logged in
@@ -443,72 +508,71 @@ export default function Home() {
     setTimeout(() => setIsRotating(false), 500)
   }
 
-  return (
-    <AuthGuard>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <nav className="bg-white dark:bg-gray-800 shadow-sm">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-8">
-                <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
-                  Language Translator
-                  </Link>
-                <div className="hidden md:flex space-x-4">
-                  <button
-                    onClick={() => setActiveTab('translate')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      activeTab === 'translate'
-                        ? 'bg-blue-500 text-white'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    Translate
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('learn')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      activeTab === 'learn'
-                        ? 'bg-blue-500 text-white'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    Learn
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={toggleDarkMode}
-                  className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
+  const handleFlashcardResult = async (flashcard: FlashCard, result: 'easy' | 'medium' | 'hard') => {
+    try {
+      const response = await fetch('/api/learning/flashcard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flashcardId: flashcard.id, result }),
+      });
+      
+      if (response.ok) {
+        // Refresh flashcards
+        fetchUserData();
+      }
+    } catch (error) {
+      console.error('Error updating flashcard:', error);
+    }
+  };
 
-        {activeTab === 'translate' ? (
-          <main className="container mx-auto px-4 py-8">
-            <div className="flex">
-              <FeaturePanel activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
-              <div className="flex-1">
-                <div className="p-4 border-b border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-white">
-                      {activeFeature.charAt(0).toUpperCase() + activeFeature.slice(1)}
-                    </h1>
-                </div>
-              </div>
+  const handleQuizComplete = async (score: number, totalQuestions: number) => {
+    try {
+      await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: userId, 
+          quizScore: score,
+          totalQuestions,
+          difficulty: selectedDifficulty || 'easy'
+        }),
+      });
+      setSelectedDifficulty(null);
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
 
-                <div className="p-6">
-              {activeFeature === 'translator' && (
+  const fetchUserData = async () => {
+    try {
+      // Fetch flashcards
+      const flashcardsRes = await fetch(`/api/learning?userId=${userId}&type=flashcards`);
+      const flashcardsData = await flashcardsRes.json();
+      setFlashcards(flashcardsData.flashcards);
+
+      // Fetch translations for flashcards
+      if (flashcardsData.flashcards.length > 0) {
+        const translationIds = flashcardsData.flashcards.map((f: FlashCard) => f.translationId);
+        const translationsRes = await fetch(`/api/learning/translations?ids=${translationIds.join(',')}`);
+        const translationsData = await translationsRes.json();
+        
+        const translationsMap: Record<string, Translation> = {};
+        translationsData.translations.forEach((t: Translation) => {
+          translationsMap[t.id] = t;
+        });
+        setTranslations(translationsMap);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeFeature) {
+      case 'translator':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="flex flex-col gap-6">
                 <div className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Input Section */}
@@ -630,31 +694,204 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-              )}
+            </div>
+          </div>
+        );
               
-              {activeFeature === 'history' && (
+      case 'history':
+        return (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
                   <TranslationHistoryPanel userId={userId} limit={20} />
+          </div>
+        );
+
+      case 'grammar':
+        return <GrammarCheck />;
+
+      case 'dictionary':
+        return <Dictionary />;
+
+      case 'summarizer':
+        return <Summarizer />;
+
+      case 'paraphraser':
+        return <Paraphraser />;
+
+      case 'learning':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Learning Mode</h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Hover over "Learning Mode" in the sidebar to access all learning features:
+              </p>
+              <ul className="space-y-2 text-gray-700 dark:text-gray-300">
+                <li>• Progress History - Track your learning progress</li>
+                <li>• Flashcards - Review words and phrases</li>
+                <li>• Translation Quiz - Test your knowledge</li>
+                <li>• Vocabulary Trainer - Build your vocabulary</li>
+                <li>• Pronunciation Practice - Improve your accent</li>
+                <li>• Lessons - Structured learning content</li>
+                <li>• My Notebook - Save important notes</li>
+              </ul>
+            </div>
+          </div>
+        );
+
+      case 'progress':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              <ProgressReport userId={userId} />
+            </div>
+          </div>
+        );
+
+      case 'flashcards':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              {flashcards.length > 0 ? (
+                <div className="space-y-6">
+                  {flashcards.map((flashcard) => (
+                    <Flashcard
+                      key={flashcard.id}
+                      flashcard={flashcard}
+                      translation={translations[flashcard.translationId]}
+                      onResult={(result) => handleFlashcardResult(flashcard, result)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-xl text-gray-700 dark:text-gray-300">
+                    No flashcards due for review! Keep translating to create more cards.
+                  </p>
                 </div>
               )}
-              
-              {activeFeature === 'grammar' && <GrammarCheck />}
-              {activeFeature === 'dictionary' && <Dictionary />}
-              {activeFeature === 'summarizer' && <Summarizer />}
-              {activeFeature === 'paraphraser' && <Paraphraser />}
-                  {activeFeature === 'learning' && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-                      <LearningMode />
+            </div>
+          </div>
+        );
+
+      case 'quiz':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              {!selectedDifficulty ? (
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Select Quiz Difficulty</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(Object.keys(difficultySettings) as Difficulty[]).map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setSelectedDifficulty(level)}
+                        className={`p-6 rounded-xl shadow-lg transition-all ${
+                          difficultySettings[level].color
+                        } ${difficultySettings[level].hoverColor} text-white`}
+                      >
+                        <div className="flex items-center justify-center mb-4">
+                          {difficultySettings[level].icon}
+                        </div>
+                        <h3 className="text-xl font-bold mb-2 capitalize">{level}</h3>
+                        <p className="text-sm opacity-90">
+                          {difficultySettings[level].description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
                     </div>
-                  )}
+              ) : (
+                <Quiz
+                  userId={userId}
+                  difficulty={selectedDifficulty}
+                  sourceLang="en"
+                  targetLang="es"
+                  onComplete={handleQuizComplete}
+                />
+              )}
+            </div>
+          </div>
+        );
+
+      case 'vocabulary':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              <VocabularyTrainer userId={userId} />
+            </div>
+          </div>
+        );
+
+      case 'pronunciation':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              <PronunciationPractice userId={userId} />
+            </div>
+          </div>
+        );
+
+      case 'lessons':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              <Lessons userId={userId} />
+            </div>
+          </div>
+        );
+
+      case 'notebook':
+        return (
+          <div className="container mx-auto p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              <Notebook selectedLanguage={selectedLanguage} />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+        <FeaturePanel 
+          activeFeature={activeFeature} 
+          setActiveFeature={setActiveFeature}
+        />
+        <main className="flex-1 overflow-y-auto">
+          <nav className="bg-white dark:bg-gray-800 shadow-sm">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center space-x-8">
+                  <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
+                    Language Translator
+                  </Link>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={toggleDarkMode}
+                    className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
+                  >
+                    Logout
+                  </button>
             </div>
           </div>
         </div>
+          </nav>
+
+          {renderContent()}
           </main>
-        ) : (
-          <LearningDashboard />
-        )}
       </div>
     </AuthGuard>
-  )
+  );
 }
+
