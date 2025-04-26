@@ -21,9 +21,9 @@ interface QuizProps {
 }
 
 const DIFFICULTY_SETTINGS = {
-  easy: { timeLimit: 30, questions: 5 },
-  medium: { timeLimit: 45, questions: 10 },
-  hard: { timeLimit: 60, questions: 15 }
+  easy: { timeLimit: 45, questions: 5 },
+  medium: { timeLimit: 90, questions: 10 },
+  hard: { timeLimit: 120, questions: 15 }
 };
 
 export default function Quiz({ userId, difficulty, sourceLang, targetLang, onComplete }: QuizProps) {
@@ -37,86 +37,203 @@ export default function Quiz({ userId, difficulty, sourceLang, targetLang, onCom
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchQuizQuestions();
-  }, [difficulty, userId]);
-
-  const fetchQuizQuestions = async () => {
-    try {
-      // First try to fetch from our quiz API
-      const response = await fetch(`/api/learning/quiz?difficulty=${difficulty}&limit=${DIFFICULTY_SETTINGS[difficulty].questions}`);
-      const data = await response.json();
-      
-      if (data.questions && data.questions.length > 0) {
-        setQuestions(data.questions);
-        setTimeLeft(DIFFICULTY_SETTINGS[difficulty].timeLimit);
-        setLoading(false);
-        return;
+    // Different MCQ questions for each difficulty
+    const easyQuestions: Question[] = [
+      {
+        id: 1,
+        text: 'What is the Spanish word for "cat"?',
+        options: [
+          { text: 'gato', image: '', isCorrect: true },
+          { text: 'perro', image: '', isCorrect: false },
+          { text: 'casa', image: '', isCorrect: false },
+          { text: 'libro', image: '', isCorrect: false },
+        ],
+        explanation: '"Gato" means "cat" in Spanish.'
+      },
+      {
+        id: 2,
+        text: 'How do you say "thank you" in French?',
+        options: [
+          { text: 'merci', image: '', isCorrect: true },
+          { text: 'gracias', image: '', isCorrect: false },
+          { text: 'danke', image: '', isCorrect: false },
+          { text: 'ciao', image: '', isCorrect: false },
+        ],
+        explanation: '"Merci" means "thank you" in French.'
+      },
+      {
+        id: 3,
+        text: 'What is the German word for "apple"?',
+        options: [
+          { text: 'Apfel', image: '', isCorrect: true },
+          { text: 'Banane', image: '', isCorrect: false },
+          { text: 'Orange', image: '', isCorrect: false },
+          { text: 'Traube', image: '', isCorrect: false },
+        ],
+        explanation: '"Apfel" means "apple" in German.'
+      },
+      {
+        id: 4,
+        text: 'How do you say "good morning" in Italian?',
+        options: [
+          { text: 'buongiorno', image: '', isCorrect: true },
+          { text: 'buonasera', image: '', isCorrect: false },
+          { text: 'notte', image: '', isCorrect: false },
+          { text: 'prego', image: '', isCorrect: false },
+        ],
+        explanation: '"Buongiorno" means "good morning" in Italian.'
+      },
+      {
+        id: 5,
+        text: 'What is the Japanese word for "water"?',
+        options: [
+          { text: 'mizu', image: '', isCorrect: true },
+          { text: 'sake', image: '', isCorrect: false },
+          { text: 'ocha', image: '', isCorrect: false },
+          { text: 'kōhī', image: '', isCorrect: false },
+        ],
+        explanation: '"Mizu" means "water" in Japanese.'
       }
-      
-      // If no predefined questions or as a fallback, generate from user translations
-      const translationsResponse = await fetch(`/api/learning/translations?userId=${userId}`);
-      const translationsData = await translationsResponse.json();
-      
-      if (!translationsData.translations || translationsData.translations.length === 0) {
-        setQuestions([]);
-        setLoading(false);
-        return;
+    ];
+
+    const mediumQuestions: Question[] = [
+      {
+        id: 1,
+        text: 'What is the French word for "library"?',
+        options: [
+          { text: 'bibliothèque', image: '', isCorrect: true },
+          { text: 'libro', image: '', isCorrect: false },
+          { text: 'livre', image: '', isCorrect: false },
+          { text: 'maison', image: '', isCorrect: false },
+        ],
+        explanation: '"Bibliothèque" means "library" in French.'
+      },
+      {
+        id: 2,
+        text: 'How do you say "bread" in Spanish?',
+        options: [
+          { text: 'pan', image: '', isCorrect: true },
+          { text: 'queso', image: '', isCorrect: false },
+          { text: 'vino', image: '', isCorrect: false },
+          { text: 'pollo', image: '', isCorrect: false },
+        ],
+        explanation: '"Pan" means "bread" in Spanish.'
+      },
+      {
+        id: 3,
+        text: 'What is the Italian word for "school"?',
+        options: [
+          { text: 'scuola', image: '', isCorrect: true },
+          { text: 'studente', image: '', isCorrect: false },
+          { text: 'insegnante', image: '', isCorrect: false },
+          { text: 'lezione', image: '', isCorrect: false },
+        ],
+        explanation: '"Scuola" means "school" in Italian.'
+      },
+      {
+        id: 4,
+        text: 'How do you say "friend" in German?',
+        options: [
+          { text: 'Freund', image: '', isCorrect: true },
+          { text: 'Familie', image: '', isCorrect: false },
+          { text: 'Lehrer', image: '', isCorrect: false },
+          { text: 'Kind', image: '', isCorrect: false },
+        ],
+        explanation: '"Freund" means "friend" in German.'
+      },
+      {
+        id: 5,
+        text: 'What is the Russian word for "hello"?',
+        options: [
+          { text: 'privet', image: '', isCorrect: true },
+          { text: 'spasibo', image: '', isCorrect: false },
+          { text: 'dasvidaniya', image: '', isCorrect: false },
+          { text: 'poka', image: '', isCorrect: false },
+        ],
+        explanation: '"Privet" means "hello" in Russian.'
       }
+    ];
 
-      const translations = translationsData.translations;
-      const quizQuestions: Question[] = [];
-      const numQuestions = DIFFICULTY_SETTINGS[difficulty].questions;
-      
-      // Sample image paths (in a real app, these would come from your assets)
-      const sampleImages = [
-        '/images/apple.png',
-        '/images/book.png',
-        '/images/dog.png',
-        '/images/cat.png',
-        '/images/house.png',
-        '/images/car.png',
-      ];
-      
-      // Select random translations based on difficulty
-      for (let i = 0; i < numQuestions && i < translations.length; i++) {
-        const translation = translations[i];
-        const otherTranslations = translations.filter((t: { id: string; targetText: string; sourceText: string }) => t.id !== translation.id);
-        
-        // Create options with images
-        const correctOption = {
-          text: translation.targetText,
-          image: sampleImages[i % sampleImages.length],
-          isCorrect: true
-        };
-        
-        const incorrectOptions = [];
-        for (let j = 0; j < 2 && j < otherTranslations.length; j++) {
-          incorrectOptions.push({
-            text: otherTranslations[j].targetText,
-            image: sampleImages[(i + j + 1) % sampleImages.length],
-            isCorrect: false
-          });
-        }
-        
-        // Combine and shuffle options
-        const options = shuffleArray([correctOption, ...incorrectOptions]);
-
-        quizQuestions.push({
-          id: i + 1,
-          text: `Which one of these is "${translation.sourceText}"?`,
-          options: options,
-          explanation: `"${correctOption.text}" means "${translation.sourceText}" in ${targetLang === 'es' ? 'Spanish' : targetLang === 'fr' ? 'French' : 'the target language'}.`
-        });
+    const hardQuestions: Question[] = [
+      {
+        id: 1,
+        text: 'What is the Portuguese word for "challenge"?',
+        options: [
+          { text: 'desafio', image: '', isCorrect: true },
+          { text: 'trabalho', image: '', isCorrect: false },
+          { text: 'festa', image: '', isCorrect: false },
+          { text: 'viagem', image: '', isCorrect: false },
+        ],
+        explanation: '"Desafio" means "challenge" in Portuguese.'
+      },
+      {
+        id: 2,
+        text: 'How do you say "environment" in Japanese?',
+        options: [
+          { text: 'kankyō', image: '', isCorrect: true },
+          { text: 'shizen', image: '', isCorrect: false },
+          { text: 'mizu', image: '', isCorrect: false },
+          { text: 'tenki', image: '', isCorrect: false },
+        ],
+        explanation: '"Kankyō" means "environment" in Japanese.'
+      },
+      {
+        id: 3,
+        text: 'What is the Spanish word for "improvement"?',
+        options: [
+          { text: 'mejora', image: '', isCorrect: true },
+          { text: 'empeoramiento', image: '', isCorrect: false },
+          { text: 'cambio', image: '', isCorrect: false },
+          { text: 'crecimiento', image: '', isCorrect: false },
+        ],
+        explanation: '"Mejora" means "improvement" in Spanish.'
+      },
+      {
+        id: 4,
+        text: 'How do you say "independence" in French?',
+        options: [
+          { text: 'indépendance', image: '', isCorrect: true },
+          { text: 'liberté', image: '', isCorrect: false },
+          { text: 'égalité', image: '', isCorrect: false },
+          { text: 'paix', image: '', isCorrect: false },
+        ],
+        explanation: '"Indépendance" means "independence" in French.'
+      },
+      {
+        id: 5,
+        text: 'What is the German word for "responsibility"?',
+        options: [
+          { text: 'Verantwortung', image: '', isCorrect: true },
+          { text: 'Möglichkeit', image: '', isCorrect: false },
+          { text: 'Freundschaft', image: '', isCorrect: false },
+          { text: 'Erfahrung', image: '', isCorrect: false },
+        ],
+        explanation: '"Verantwortung" means "responsibility" in German.'
       }
+    ];
 
-      setQuestions(quizQuestions);
-      setTimeLeft(DIFFICULTY_SETTINGS[difficulty].timeLimit);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error generating questions:', error);
-      setLoading(false);
+    let selectedQuestions: Question[] = easyQuestions;
+    if (difficulty === 'medium') selectedQuestions = mediumQuestions;
+    if (difficulty === 'hard') selectedQuestions = hardQuestions;
+
+    // Shuffle options for each question
+    const shuffledQuestions = selectedQuestions.map(q => ({
+      ...q,
+      options: shuffleArray(q.options)
+    }));
+
+    // If more questions are defined than needed, randomly select the required number
+    const numQuestions = DIFFICULTY_SETTINGS[difficulty].questions;
+    let finalQuestions = shuffledQuestions;
+    if (shuffledQuestions.length > numQuestions) {
+      // Shuffle questions and pick the first numQuestions
+      finalQuestions = shuffleArray(shuffledQuestions).slice(0, numQuestions);
     }
-  };
+
+    setQuestions(finalQuestions);
+    setTimeLeft(DIFFICULTY_SETTINGS[difficulty].timeLimit);
+    setLoading(false);
+  }, [difficulty, userId]);
 
   // Timer countdown
   useEffect(() => {
@@ -269,7 +386,7 @@ export default function Quiz({ userId, difficulty, sourceLang, targetLang, onCom
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-blue-50 dark:hover:bg-blue-900'
               }`}
             >
-              <img src={option.image} alt={option.text} className="w-20 h-20 object-contain mb-2" />
+
               <span className="font-semibold text-lg text-gray-900 dark:text-white">{option.text}</span>
               {showAnswer && option.isCorrect && (
                 <FaCheck className="text-green-500 h-5 w-5 mt-2" />
