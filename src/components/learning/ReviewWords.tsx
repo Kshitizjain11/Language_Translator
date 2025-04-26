@@ -18,11 +18,63 @@ interface ReviewWordsProps {
   words: Word[]
 }
 
+// --- Demo visually engaging flashcards ---
+const demoWords: Word[] = [
+  {
+    id: '1',
+    word: 'Hello',
+    meaning: 'Hola',
+    pronunciation: 'heh-loh',
+    example: 'Hello! How are you? / ¡Hola! ¿Cómo estás?',
+    date: new Date(),
+    learned: false,
+  },
+  {
+    id: '2',
+    word: 'Thank you',
+    meaning: 'Gracias',
+    pronunciation: 'thangk-yoo',
+    example: 'Thank you for your help. / Gracias por tu ayuda.',
+    date: new Date(),
+    learned: false,
+  },
+  {
+    id: '3',
+    word: 'Dog',
+    meaning: 'Perro',
+    pronunciation: 'dog',
+    example: 'The dog is friendly. / El perro es amigable.',
+    date: new Date(),
+    learned: false,
+  },
+  {
+    id: '4',
+    word: 'Apple',
+    meaning: 'Manzana',
+    pronunciation: 'ap-uhl',
+    example: 'I eat an apple every day. / Como una manzana cada día.',
+    date: new Date(),
+    learned: false,
+  },
+  {
+    id: '5',
+    word: 'Good night',
+    meaning: 'Buenas noches',
+    pronunciation: 'good-nait',
+    example: 'Good night and sweet dreams! / ¡Buenas noches y dulces sueños!',
+    date: new Date(),
+    learned: false,
+  }
+];
+
 const ReviewWords = ({ words }: ReviewWordsProps) => {
+  // Use demoWords if no words are passed in
+  const workingWords = words && words.length > 0 ? words : demoWords;
+
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'word'>('date')
 
-  const filteredWords = words
+  const filteredWords = workingWords
     .filter(word => 
       word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       word.meaning.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,7 +93,7 @@ const ReviewWords = ({ words }: ReviewWordsProps) => {
   }
 
   const removeWord = (id: string) => {
-    const updatedWords = words.filter(word => word.id !== id)
+    const updatedWords = workingWords.filter(word => word.id !== id)
     localStorage.setItem('learnedWords', JSON.stringify(updatedWords))
   }
 

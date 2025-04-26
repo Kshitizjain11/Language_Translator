@@ -306,6 +306,7 @@ export default function Home() {
     flag: '🇪🇸',
     display: '🇪🇸 Spanish'
   });
+  const [demoTargetLang, setDemoTargetLang] = useState<'es' | 'fr' | 'de'>('es');
 
   const difficultySettings: Record<Difficulty, DifficultyOption> = {
     easy: {
@@ -567,6 +568,55 @@ export default function Home() {
     }
   };
 
+  const demoFlashcards = [
+    { id: '1', translationId: '1', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '2', translationId: '2', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '3', translationId: '3', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '4', translationId: '4', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '5', translationId: '5', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '6', translationId: '6', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '7', translationId: '7', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '8', translationId: '8', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '9', translationId: '9', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+    { id: '10', translationId: '10', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
+  ];
+  const demoTranslations = [
+    { id: '1', userId: 'demo', sourceText: 'Hello', targetText: { es: 'Hola', fr: 'Bonjour', de: 'Hallo' }, sourceLang: 'en', targetLang: 'es', frequency: 10, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '2', userId: 'demo', sourceText: 'Thank you', targetText: { es: 'Gracias', fr: 'Merci', de: 'Danke' }, sourceLang: 'en', targetLang: 'es', frequency: 8, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '3', userId: 'demo', sourceText: 'Dog', targetText: { es: 'Perro', fr: 'Chien', de: 'Hund' }, sourceLang: 'en', targetLang: 'es', frequency: 7, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '4', userId: 'demo', sourceText: 'Apple', targetText: { es: 'Manzana', fr: 'Pomme', de: 'Apfel' }, sourceLang: 'en', targetLang: 'es', frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '5', userId: 'demo', sourceText: 'Good night', targetText: { es: 'Buenas noches', fr: 'Bonne nuit', de: 'Gute Nacht' }, sourceLang: 'en', targetLang: 'es', frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '6', userId: 'demo', sourceText: 'Friend', targetText: { es: 'Amigo', fr: 'Ami', de: 'Freund' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '7', userId: 'demo', sourceText: 'School', targetText: { es: 'Escuela', fr: 'École', de: 'Schule' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '8', userId: 'demo', sourceText: 'Book', targetText: { es: 'Libro', fr: 'Livre', de: 'Buch' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '9', userId: 'demo', sourceText: 'Water', targetText: { es: 'Agua', fr: 'Eau', de: 'Wasser' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '10', userId: 'demo', sourceText: 'Family', targetText: { es: 'Familia', fr: 'Famille', de: 'Familie' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+  ];
+
+  const demoLanguages = [
+    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+    { code: 'fr', name: 'French', flag: '🇫🇷' },
+    { code: 'de', name: 'German', flag: '🇩🇪' },
+  ];
+
+  const getFlashcardsToShow = () => {
+    if (flashcards.length > 0 && Object.keys(translations).length > 0) {
+      return flashcards.map(fc => ({
+        flashcard: fc,
+        translation: translations[fc.translationId]
+      })).filter(pair => !!pair.translation);
+    }
+    // fallback to demo
+    return demoFlashcards.map((fc, i) => ({
+      flashcard: fc,
+      translation: {
+        ...demoTranslations[i],
+        targetText: demoTranslations[i].targetText[demoTargetLang],
+        targetLang: demoTargetLang
+      }
+    }));
+  };
+
   const renderContent = () => {
     switch (activeFeature) {
       case 'translator':
@@ -748,27 +798,32 @@ export default function Home() {
         );
 
       case 'flashcards':
+        const flashcardsToShow = getFlashcardsToShow();
         return (
           <div className="container mx-auto p-6">
+            <div className="flex items-center mb-4 gap-4">
+              <label className="font-medium text-gray-700 dark:text-gray-200">Show translation in:</label>
+              <select
+                value={demoTargetLang}
+                onChange={e => setDemoTargetLang(e.target.value as 'es' | 'fr' | 'de')}
+                className="rounded-lg border-gray-300 dark:bg-gray-900 dark:text-white px-3 py-1"
+              >
+                {demoLanguages.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.flag} {lang.name}</option>
+                ))}
+              </select>
+            </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              {flashcards.length > 0 ? (
-                <div className="space-y-6">
-                  {flashcards.map((flashcard) => (
-                    <Flashcard
-                      key={flashcard.id}
-                      flashcard={flashcard}
-                      translation={translations[flashcard.translationId]}
-                      onResult={(result) => handleFlashcardResult(flashcard, result)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-xl text-gray-700 dark:text-gray-300">
-                    No flashcards due for review! Keep translating to create more cards.
-                  </p>
-                </div>
-              )}
+              <div className="flex flex-wrap justify-center gap-8">
+                {flashcardsToShow.map(({ flashcard, translation }) => (
+                  <Flashcard
+                    key={flashcard.id}
+                    flashcard={flashcard}
+                    translation={translation}
+                    onResult={() => {}}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -894,4 +949,3 @@ export default function Home() {
     </AuthGuard>
   );
 }
-

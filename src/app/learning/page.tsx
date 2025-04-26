@@ -452,6 +452,84 @@ export default function LearningPage() {
     router.push('/login');
   };
 
+  // --- DEMO FLASHCARDS DATA ---
+  const demoFlashcards: FlashCard[] = [
+    {
+      id: '1',
+      translationId: '1',
+      nextReviewDate: new Date(),
+      easeFactor: 2.5,
+      interval: 1,
+      streak: 0,
+    },
+    {
+      id: '2',
+      translationId: '2',
+      nextReviewDate: new Date(),
+      easeFactor: 2.5,
+      interval: 1,
+      streak: 0,
+    },
+    {
+      id: '3',
+      translationId: '3',
+      nextReviewDate: new Date(),
+      easeFactor: 2.5,
+      interval: 1,
+      streak: 0,
+    },
+  ];
+
+  const demoTranslations: Translation[] = [
+    {
+      id: '1',
+      userId: 'demo',
+      sourceText: 'Hello',
+      targetText: 'Hola',
+      sourceLang: 'en',
+      targetLang: 'es',
+      frequency: 10,
+      lastTranslated: new Date(),
+      createdAt: new Date(),
+    },
+    {
+      id: '2',
+      userId: 'demo',
+      sourceText: 'Thank you',
+      targetText: 'Gracias',
+      sourceLang: 'en',
+      targetLang: 'es',
+      frequency: 8,
+      lastTranslated: new Date(),
+      createdAt: new Date(),
+    },
+    {
+      id: '3',
+      userId: 'demo',
+      sourceText: 'Dog',
+      targetText: 'Perro',
+      sourceLang: 'en',
+      targetLang: 'es',
+      frequency: 7,
+      lastTranslated: new Date(),
+      createdAt: new Date(),
+    },
+  ];
+
+  const getFlashcardsToShow = () => {
+    if (flashcards.length > 0 && Object.keys(translations).length > 0) {
+      return flashcards.map(fc => ({
+        flashcard: fc,
+        translation: translations[fc.translationId]
+      })).filter(pair => !!pair.translation);
+    }
+    // fallback to demo
+    return demoFlashcards.map((fc, i) => ({
+      flashcard: fc,
+      translation: demoTranslations[i]
+    }));
+  };
+
   const renderContent = () => {
     switch (activeFeature) {
       case 'translator':
@@ -585,24 +663,17 @@ export default function LearningPage() {
         );
 
       case 'flashcards':
+        const flashcardsToShow = getFlashcardsToShow();
         return (
           <div className="p-6 space-y-6">
-            {flashcards.length > 0 ? (
-              flashcards.map((flashcard) => (
-                <Flashcard
-                  key={flashcard.id}
-                  flashcard={flashcard}
-                  translation={translations[flashcard.translationId]}
-                  onResult={(result) => handleFlashcardResult(flashcard, result)}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-                <p className="text-xl text-gray-700 dark:text-gray-300">
-                  No flashcards due for review! Keep translating to create more cards.
-                </p>
-              </div>
-            )}
+            {flashcardsToShow.map(({ flashcard, translation }) => (
+              <Flashcard
+                key={flashcard.id}
+                flashcard={flashcard}
+                translation={translation}
+                onResult={() => {}}
+              />
+            ))}
           </div>
         );
 
