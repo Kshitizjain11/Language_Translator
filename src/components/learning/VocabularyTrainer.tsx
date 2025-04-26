@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaBook, FaCheck, FaTimes, FaRedo } from 'react-icons/fa';
+import { FaBook, FaCheck, FaTimes, FaRedo, FaGamepad } from 'react-icons/fa';
+import HangmanGame from './HangmanGame';
 
 interface VocabWord {
   id: string;
@@ -13,6 +14,10 @@ interface VocabWord {
   difficulty: number; // 1-5, where 1 is easiest
 }
 
+interface VocabularyResponse {
+  words: VocabWord[];
+}
+
 export default function VocabularyTrainer({ userId }: { userId: string }) {
   const [words, setWords] = useState<VocabWord[]>([]);
   const [currentWord, setCurrentWord] = useState<VocabWord | null>(null);
@@ -20,6 +25,7 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [showHangman, setShowHangman] = useState(false);
 
   useEffect(() => {
     fetchVocabulary();
@@ -27,11 +33,11 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
 
   const fetchVocabulary = async () => {
     try {
-      // In a real app, this would fetch from your API
       const response = await fetch(`/api/learning/vocabulary?userId=${userId}&category=${selectedCategory}`);
-      const data = await response.json();
+      const data: VocabularyResponse = await response.json();
       setWords(data.words);
-      setCategories(['all', ...new Set(data.words.map((w: VocabWord) => w.category))]);
+      const uniqueCategories = Array.from(new Set(data.words.map((w: VocabWord) => w.category)));
+      setCategories(['all', ...uniqueCategories]);
       selectNextWord(data.words);
       setLoading(false);
     } catch (error) {
@@ -54,26 +60,23 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
   const handleDifficultyResponse = async (difficulty: number) => {
     if (!currentWord) return;
 
-    const nextReview = calculateNextReview(difficulty);
     const updatedWord = {
       ...currentWord,
-      difficulty,
       lastReviewed: new Date(),
-      nextReview,
+      nextReview: calculateNextReview(difficulty),
+      difficulty: difficulty
     };
 
     try {
-      await fetch('/api/learning/vocabulary/update', {
-        method: 'POST',
+      await fetch(`/api/learning/vocabulary/${currentWord.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedWord),
+        body: JSON.stringify(updatedWord)
       });
 
-      setWords(prev => prev.map(w => 
-        w.id === currentWord.id ? updatedWord : w
-      ));
-      setShowTranslation(false);
+      setWords(words.map(w => w.id === currentWord.id ? updatedWord : w));
       selectNextWord(words);
+      setShowTranslation(false);
     } catch (error) {
       console.error('Error updating word:', error);
     }
@@ -81,8 +84,15 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
 
   const calculateNextReview = (difficulty: number): Date => {
     const now = new Date();
-    const days = Math.pow(2, difficulty - 1); // Exponential spacing based on difficulty
-    return new Date(now.setDate(now.getDate() + days));
+    const daysToAdd = difficulty === 1 ? 1 : difficulty === 2 ? 3 : 7;
+    return new Date(now.setDate(now.getDate() + daysToAdd));
+  };
+
+  const handleGameComplete = async (score: number) => {
+    if (currentWord) {
+      const difficulty = Math.min(Math.floor(score / 50) + 1, 5);
+      await handleDifficultyResponse(difficulty);
+    }
   };
 
   if (loading) {
@@ -93,42 +103,53 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
     );
   }
 
+  if (showHangman) {
+    return (
+      <div>
+        <button
+          onClick={() => setShowHangman(false)}
+          className="mb-4 p-2 rounded bg-gray-200 hover:bg-gray-300"
+        >
+          Back to Vocabulary
+        </button>
+        <HangmanGame
+          words={words.map(w => w.word)}
+          onGameComplete={handleGameComplete}
+        />
+      </div>
+    );
+  }
+
   if (!currentWord) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-        <FaBook className="mx-auto h-12 w-12 text-blue-500 dark:text-blue-400 mb-4" />
-        <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">All Caught Up!</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          No words due for review. Great job keeping up with your studies!
-        </p>
-        <button
-          onClick={() => fetchVocabulary()}
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
-        >
-          <FaRedo className="inline-block mr-2" />
-          Check Again
-        </button>
-      </div>
+      <HangmanGame
+        words={words.map(w => w.word)}
+        onGameComplete={handleGameComplete}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Category Selection */}
-      <div className="flex space-x-2 overflow-x-auto pb-2">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-full whitespace-nowrap ${
-              selectedCategory === category
-                ? 'bg-blue-500 dark:bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            {category.charAt(0).toUpperCase() + category.slice(1)}
-          </button>
-        ))}
+      <div className="flex justify-between items-center mb-4">
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="p-2 rounded border"
+        >
+          {categories.map(category => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => setShowHangman(true)}
+          className="p-2 rounded bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-2"
+        >
+          <FaGamepad />
+          Play Hangman
+        </button>
       </div>
 
       {/* Word Card */}
