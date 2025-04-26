@@ -306,7 +306,7 @@ export default function Home() {
     flag: '🇪🇸',
     display: '🇪🇸 Spanish'
   });
-  const [demoTargetLang, setDemoTargetLang] = useState<'es' | 'fr' | 'de'>('es');
+  const [demoTargetLang, setDemoTargetLang] = useState<'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'hi'>('es');
 
   const difficultySettings: Record<Difficulty, DifficultyOption> = {
     easy: {
@@ -581,22 +581,26 @@ export default function Home() {
     { id: '10', translationId: '10', nextReviewDate: new Date(), easeFactor: 2.5, interval: 1, streak: 0 },
   ];
   const demoTranslations = [
-    { id: '1', userId: 'demo', sourceText: 'Hello', targetText: { es: 'Hola', fr: 'Bonjour', de: 'Hallo' }, sourceLang: 'en', targetLang: 'es', frequency: 10, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '2', userId: 'demo', sourceText: 'Thank you', targetText: { es: 'Gracias', fr: 'Merci', de: 'Danke' }, sourceLang: 'en', targetLang: 'es', frequency: 8, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '3', userId: 'demo', sourceText: 'Dog', targetText: { es: 'Perro', fr: 'Chien', de: 'Hund' }, sourceLang: 'en', targetLang: 'es', frequency: 7, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '4', userId: 'demo', sourceText: 'Apple', targetText: { es: 'Manzana', fr: 'Pomme', de: 'Apfel' }, sourceLang: 'en', targetLang: 'es', frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '5', userId: 'demo', sourceText: 'Good night', targetText: { es: 'Buenas noches', fr: 'Bonne nuit', de: 'Gute Nacht' }, sourceLang: 'en', targetLang: 'es', frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '6', userId: 'demo', sourceText: 'Friend', targetText: { es: 'Amigo', fr: 'Ami', de: 'Freund' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '7', userId: 'demo', sourceText: 'School', targetText: { es: 'Escuela', fr: 'École', de: 'Schule' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '8', userId: 'demo', sourceText: 'Book', targetText: { es: 'Libro', fr: 'Livre', de: 'Buch' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '9', userId: 'demo', sourceText: 'Water', targetText: { es: 'Agua', fr: 'Eau', de: 'Wasser' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
-    { id: '10', userId: 'demo', sourceText: 'Family', targetText: { es: 'Familia', fr: 'Famille', de: 'Familie' }, sourceLang: 'en', targetLang: 'es', frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '1', userId: 'demo', sourceText: 'Hello', targetText: { es: 'Hola', fr: 'Bonjour', de: 'Hallo', it: 'Ciao', pt: 'Olá', ru: 'Привет', hi: 'नमस्ते' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 10, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '2', userId: 'demo', sourceText: 'Thank you', targetText: { es: 'Gracias', fr: 'Merci', de: 'Danke', it: 'Grazie', pt: 'Obrigado', ru: 'Спасибо', hi: 'धन्यवाद' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 8, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '3', userId: 'demo', sourceText: 'Dog', targetText: { es: 'Perro', fr: 'Chien', de: 'Hund', it: 'Cane', pt: 'Cão', ru: 'Собака', hi: 'कुत्ता' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 7, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '4', userId: 'demo', sourceText: 'Apple', targetText: { es: 'Manzana', fr: 'Pomme', de: 'Apfel', it: 'Mela', pt: 'Maçã', ru: 'Яблоко', hi: 'सेब' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '5', userId: 'demo', sourceText: 'Good night', targetText: { es: 'Buenas noches', fr: 'Bonne nuit', de: 'Gute Nacht', it: 'Buona notte', pt: 'Boa noite', ru: 'Спокойной ночи', hi: 'शुभ रात्रि' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 6, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '6', userId: 'demo', sourceText: 'Friend', targetText: { es: 'Amigo', fr: 'Ami', de: 'Freund', it: 'Amico', pt: 'Amigo', ru: 'Друг', hi: 'दोस्त' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '7', userId: 'demo', sourceText: 'School', targetText: { es: 'Escuela', fr: 'École', de: 'Schule', it: 'Scuola', pt: 'Escola', ru: 'Школа', hi: 'स्कूल' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '8', userId: 'demo', sourceText: 'Book', targetText: { es: 'Libro', fr: 'Livre', de: 'Buch', it: 'Libro', pt: 'Livro', ru: 'Книга', hi: 'किताब' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '9', userId: 'demo', sourceText: 'Water', targetText: { es: 'Agua', fr: 'Eau', de: 'Wasser', it: 'Acqua', pt: 'Água', ru: 'Вода', hi: 'पानी' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
+    { id: '10', userId: 'demo', sourceText: 'Family', targetText: { es: 'Familia', fr: 'Famille', de: 'Familie', it: 'Famiglia', pt: 'Família', ru: 'Семья', hi: 'परिवार' }, sourceLang: 'en', targetLang: demoTargetLang, frequency: 5, lastTranslated: new Date(), createdAt: new Date() },
   ];
 
   const demoLanguages = [
     { code: 'es', name: 'Spanish', flag: '🇪🇸' },
     { code: 'fr', name: 'French', flag: '🇫🇷' },
     { code: 'de', name: 'German', flag: '🇩🇪' },
+    { code: 'it', name: 'Italian', flag: '🇮🇹' },
+    { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+    { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+    { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
   ];
 
   const getFlashcardsToShow = () => {
@@ -805,7 +809,7 @@ export default function Home() {
               <label className="font-medium text-gray-700 dark:text-gray-200">Show translation in:</label>
               <select
                 value={demoTargetLang}
-                onChange={e => setDemoTargetLang(e.target.value as 'es' | 'fr' | 'de')}
+                onChange={e => setDemoTargetLang(e.target.value as 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'hi')}
                 className="rounded-lg border-gray-300 dark:bg-gray-900 dark:text-white px-3 py-1"
               >
                 {demoLanguages.map(lang => (
