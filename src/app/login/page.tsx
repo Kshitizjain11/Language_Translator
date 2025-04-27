@@ -67,9 +67,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
+        <div className="flex flex-col items-center">
+          <img src="/logo.png" alt="LingQuest Logo" className="w-16 h-16 mb-2" />
           <h1 className="text-center text-3xl font-bold text-gray-900 dark:text-white">
-            LangTools
+            LingQuest
           </h1>
           <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 dark:text-white">
             {isLogin ? 'Sign in to your account' : 'Create a new account'}
