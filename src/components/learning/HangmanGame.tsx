@@ -7,6 +7,8 @@ import { FaTrophy, FaSkull, FaRedo } from 'react-icons/fa';
 interface HangmanGameProps {
   words: string[];
   onGameComplete: (score: number) => void;
+  userId: string;
+  onProgressUpdate?: () => void;
 }
 
 interface HighScore {
@@ -24,7 +26,7 @@ const HANGMAN_PARTS = [
   'head', 'body', 'left-arm', 'right-arm', 'left-leg', 'right-leg', 'rope', 'beam'
 ];
 
-export default function HangmanGame({ words, onGameComplete }: HangmanGameProps) {
+export default function HangmanGame({ words, onGameComplete, userId, onProgressUpdate }: HangmanGameProps) {
   const [selectedWord, setSelectedWord] = useState('');
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [lives, setLives] = useState(6);
@@ -114,6 +116,7 @@ export default function HangmanGame({ words, onGameComplete }: HangmanGameProps)
       if (selectedWord.split('').every(l => newGuessedLetters.includes(l))) {
         setGameStatus('won');
         updateHighScores(score + 10);
+        updateProgress(selectedWord, true);
       }
     }
   };
@@ -126,6 +129,33 @@ export default function HangmanGame({ words, onGameComplete }: HangmanGameProps)
     
     setHighScores(newHighScores);
     localStorage.setItem('hangmanHighScores', JSON.stringify(newHighScores));
+  };
+
+  const updateProgress = async (word: string, isMastered: boolean) => {
+    try {
+      const response = await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          word,
+          isMastered,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update progress');
+      }
+
+      const data = await response.json();
+      console.log('Progress update response:', data);
+      onGameComplete(score);
+      if (onProgressUpdate) onProgressUpdate();
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
   };
 
   const renderWord = () => {

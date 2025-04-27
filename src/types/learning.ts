@@ -43,8 +43,12 @@ export interface UserProgress {
   totalTranslations: number;
   uniqueWords: number;
   streakDays: number;
-  lastStudyDate: Date;
   level: 'beginner' | 'intermediate' | 'advanced';
   badges: string[];
   xp: number;
+  weeklyProgress: {
+    [date: string]: number; // Date string as key, number of words learned as value
+  };
+  lastActive: string;
+  masteredWords: string[]; // Array of words the user has mastered
 }

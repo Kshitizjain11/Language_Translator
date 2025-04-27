@@ -26,6 +26,7 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [showHangman, setShowHangman] = useState(false);
+  const [progressRefreshKey, setProgressRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchVocabulary();
@@ -74,11 +75,38 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
         body: JSON.stringify(updatedWord)
       });
 
+      // Update progress when word is learned
+      if (difficulty >= 4) { // Consider word learned if difficulty is high
+        await updateProgress(currentWord.word, true);
+      }
+
       setWords(words.map(w => w.id === currentWord.id ? updatedWord : w));
       selectNextWord(words);
       setShowTranslation(false);
     } catch (error) {
       console.error('Error updating word:', error);
+    }
+  };
+
+  const updateProgress = async (word: string, isMastered: boolean) => {
+    try {
+      const response = await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'user123', // Replace with actual user ID
+          word,
+          isMastered,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update progress');
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
     }
   };
 
@@ -93,6 +121,11 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
       const difficulty = Math.min(Math.floor(score / 50) + 1, 5);
       await handleDifficultyResponse(difficulty);
     }
+  };
+
+  // Call this after hangman progress update
+  const handleProgressUpdate = () => {
+    setProgressRefreshKey((k) => k + 1);
   };
 
   if (loading) {
@@ -115,6 +148,8 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
         <HangmanGame
           words={words.map(w => w.word)}
           onGameComplete={handleGameComplete}
+          userId={userId}
+          onProgressUpdate={handleProgressUpdate}
         />
       </div>
     );
@@ -125,6 +160,8 @@ export default function VocabularyTrainer({ userId }: { userId: string }) {
       <HangmanGame
         words={words.map(w => w.word)}
         onGameComplete={handleGameComplete}
+        userId={userId}
+        onProgressUpdate={handleProgressUpdate}
       />
     );
   }

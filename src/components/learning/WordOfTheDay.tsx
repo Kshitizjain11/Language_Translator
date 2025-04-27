@@ -107,9 +107,32 @@ const WordOfTheDay = ({ onWordLearned, selectedLanguage, onSaveToNotebook }: Wor
       localStorage.setItem(`wordOfTheDay_${selectedLanguage.code}`, JSON.stringify(updatedWord))
       if (!isLearned) {
         onWordLearned(updatedWord)
+        updateProgress(updatedWord.word, true)
       }
     }
   }
+
+  const updateProgress = async (word: string, isMastered: boolean) => {
+    try {
+      const response = await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'user123', // Replace with actual user ID
+          word,
+          isMastered,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update progress');
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
 
   const handleSaveToNotebook = () => {
     if (word) {
