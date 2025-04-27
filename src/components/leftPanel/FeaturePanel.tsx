@@ -71,8 +71,9 @@ export default function FeaturePanel({ activeFeature, setActiveFeature }: Featur
     <div className="flex h-screen">
       {/* Main Sidebar */}
       <aside className="w-64 bg-gradient-to-b from-blue-500 to-purple-600 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-white/10">
-          <h1 className="text-xl font-bold text-white">LangTools</h1>
+        <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          <img src="/logo.png" alt="LingQuest Logo" style={{width:'54px',height:'54px',borderRadius:'12px',boxShadow:'0 2px 8px #0002',background:'#fff'}} />
+          <h1 className="text-2xl font-bold text-white tracking-wide" style={{letterSpacing:'0.03em'}}>LingQuest</h1>
         </div>
         
         <nav className="flex-1 overflow-y-auto py-4">
