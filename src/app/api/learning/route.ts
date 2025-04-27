@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { Translation, FlashCard, Quiz, UserProgress } from '@/types/learning';
+import type { Translation, FlashCard, Quiz, UserProgress, QuizQuestion } from '@/types/learning';
 
 // Simulated database (replace with your actual database implementation)
 let translations: Translation[] = [];
