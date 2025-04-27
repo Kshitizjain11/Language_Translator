@@ -83,7 +83,9 @@ export async function POST(request: Request) {
   const todayDate = new Date();
   const daysSinceLastActive = Math.floor((todayDate.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (daysSinceLastActive === 1) {
+  if (currentProgress.streakDays === 0) {
+    currentProgress.streakDays = 1;
+  } else if (daysSinceLastActive === 1) {
     currentProgress.streakDays += 1;
   } else if (daysSinceLastActive > 1) {
     currentProgress.streakDays = 1;
