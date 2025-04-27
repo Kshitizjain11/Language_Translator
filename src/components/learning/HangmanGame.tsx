@@ -31,7 +31,7 @@ export default function HangmanGame({ words, onGameComplete, userId, onProgressU
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [lives, setLives] = useState(6);
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
-  const [difficulty, setDifficulty] = useState<keyof typeof DIFFICULTY_LEVELS>('medium');
+  const [difficulty, setDifficulty] = useState<keyof typeof DIFFICULTY_LEVELS>('easy');
   const [highScores, setHighScores] = useState<HighScore[]>([]);
   const [score, setScore] = useState(0);
   const [loadingWord, setLoadingWord] = useState(false);
@@ -70,9 +70,11 @@ export default function HangmanGame({ words, onGameComplete, userId, onProgressU
     if (difficulty === 'easy') {
       let weighted: string[] = [];
       filteredWords.forEach(word => {
-        if (word.length === 4) weighted.push(word, word, word);
-        else if (word.length === 5) weighted.push(word, word);
-        else weighted.push(word);
+        if (word.length === 4) weighted.push(...Array(10).fill(word)); // 10x
+        else if (word.length === 5) weighted.push(...Array(8).fill(word)); // 8x
+        else if (word.length === 6) weighted.push(...Array(2).fill(word)); // 2x
+        else if (word.length === 7) weighted.push(word, word); // 2x
+        else weighted.push(word); // fallback
       });
       filteredWords = weighted;
     }
