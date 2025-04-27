@@ -29,11 +29,20 @@ export default function ProgressReport({ userId, refreshKey }: ProgressReportPro
   useEffect(() => {
     fetchProgressData();
     fetchNotebookWords();
-  }, [userId, refreshKey, localRefreshKey]);
+    const interval = setInterval(() => {
+      fetchProgressData();
+      fetchNotebookWords();
+    }, 5000); // refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, [userId]);
 
+  // Only merge after a refresh or save, not on every progress/notebookWords change
   useEffect(() => {
-    mergeWords();
-  }, [progress, notebookWords]);
+    if (!loading) {
+      mergeWords();
+    }
+    // eslint-disable-next-line
+  }, [progress, notebookWords, localRefreshKey, loading]);
 
   useEffect(() => {
     if (progress && progress.streakDays !== prevStreak.current) {
@@ -112,23 +121,32 @@ export default function ProgressReport({ userId, refreshKey }: ProgressReportPro
       }));
     localStorage.setItem('notebook', JSON.stringify(updatedNotebook));
 
-    // For each mastered notebook word, update progress API
-    await Promise.all(
-      editableWords
-        .filter((w) => w.source === 'notebook' && w.mastered)
-        .map(async (w) => {
-          try {
-            await fetch('/api/learning/progress', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId, word: w.word, isMastered: true }),
-            });
-          } catch (e) {
-            // Ignore errors for now
-          }
-        })
+    // Detect mastered/unmastered changes
+    const alreadyMastered = new Set(progress?.masteredWords || []);
+    const nowMastered = new Set(
+      editableWords.filter(w => w.source === 'notebook' && w.mastered).map(w => w.word)
     );
-    // Trigger a local refresh (if not using parent refreshKey)
+    // Words to master (newly checked)
+    const toMaster = Array.from(nowMastered).filter(word => !alreadyMastered.has(word));
+    // Words to unmaster (newly unchecked)
+    const toUnmaster = Array.from(alreadyMastered).filter(word => !nowMastered.has(word));
+
+    await Promise.all([
+      ...toMaster.map(async word => {
+        await fetch('/api/learning/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, word, isMastered: true }),
+        });
+      }),
+      ...toUnmaster.map(async word => {
+        await fetch('/api/learning/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, word, isMastered: false }),
+        });
+      }),
+    ]);
     setLocalRefreshKey((k) => k + 1);
     alert('Changes saved!');
   };

@@ -63,9 +63,19 @@ export default function HangmanGame({ words, onGameComplete, userId, onProgressU
 
   const selectRandomWord = useCallback(async () => {
     const { wordLength } = DIFFICULTY_LEVELS[difficulty];
-    const filteredWords = words.filter(word => 
+    let filteredWords = words.filter(word =>
       word.length >= wordLength[0] && word.length <= wordLength[1]
     );
+    // Weighted selection for easy mode
+    if (difficulty === 'easy') {
+      let weighted: string[] = [];
+      filteredWords.forEach(word => {
+        if (word.length === 4) weighted.push(word, word, word);
+        else if (word.length === 5) weighted.push(word, word);
+        else weighted.push(word);
+      });
+      filteredWords = weighted;
+    }
     if (filteredWords.length > 0) {
       const randomIndex = Math.floor(Math.random() * filteredWords.length);
       return filteredWords[randomIndex];

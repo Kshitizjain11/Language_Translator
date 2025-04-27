@@ -61,18 +61,19 @@ export async function POST(request: Request) {
   }
 
   if (word) {
-    // Only increment if word is not already mastered
-    if (!currentProgress.masteredWords.includes(word)) {
-      // Increment words learned for today
-      currentProgress.weeklyProgress[today] += 1;
-      // Update mastered words
-      if (isMastered) {
+    if (isMastered) {
+      // Only add if not already mastered
+      if (!currentProgress.masteredWords.includes(word)) {
+        currentProgress.weeklyProgress[today] += 1;
         currentProgress.masteredWords.push(word);
-        // Update XP based on activity
-        currentProgress.xp += 10; // Base XP for learning a word
-        if (isMastered) {
-          currentProgress.xp += 20; // Bonus XP for mastering a word
-        }
+        currentProgress.xp += 10 + 20;
+      }
+    } else {
+      // Remove if currently mastered
+      const idx = currentProgress.masteredWords.indexOf(word);
+      if (idx !== -1) {
+        currentProgress.masteredWords.splice(idx, 1);
+        currentProgress.xp = Math.max(0, currentProgress.xp - 30);
       }
     }
   }
