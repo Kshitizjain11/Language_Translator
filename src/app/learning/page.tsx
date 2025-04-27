@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import type { Translation, FlashCard } from '@/types/learning';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { Dispatch, SetStateAction } from 'react';
 
 // Simulated user ID (replace with actual auth)
 const USER_ID = 'user123';
@@ -838,9 +839,7 @@ export default function LearningPage() {
         <div className="flex min-h-[calc(100vh-4rem)]">
           <FeaturePanel 
             activeFeature={activeFeature} 
-            setActiveFeature={handleFeatureChange}
-            onLearningHoverStart={handleSidebarShow}
-            onLearningHoverEnd={handleSidebarHide}
+            setActiveFeature={setActiveFeature as Dispatch<SetStateAction<Feature>>}
           />
           <main className="flex-1 flex flex-col">
             <div className="flex h-full relative">

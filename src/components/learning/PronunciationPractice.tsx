@@ -44,21 +44,21 @@ export default function PronunciationPractice({ userId }: { userId: string }) {
             text: 'Hello',
             audioUrl: '', // You can add a demo audio URL if available
             translation: 'Hola (Spanish)',
-            difficulty: "beginner"
+            difficulty: "beginner" as const
           },
           {
             id: '2',
             text: 'Thank you',
             audioUrl: '',
             translation: 'Merci (French)',
-            difficulty: "beginner"
+            difficulty: "beginner" as const
           },
           {
             id: '3',
             text: 'Good morning',
             audioUrl: '',
             translation: 'Guten Morgen (German)',
-            difficulty: "beginner"
+            difficulty: "beginner" as const
           }
         ];
       }
@@ -76,21 +76,21 @@ export default function PronunciationPractice({ userId }: { userId: string }) {
           text: 'Hello',
           audioUrl: '',
           translation: 'Hola (Spanish)',
-          difficulty: "beginner"
+          difficulty: "beginner" as const
         },
         {
           id: '2',
           text: 'Thank you',
           audioUrl: '',
           translation: 'Merci (French)',
-          difficulty: "beginner"
+          difficulty: "beginner" as const
         },
         {
           id: '3',
           text: 'Good morning',
           audioUrl: '',
           translation: 'Guten Morgen (German)',
-          difficulty: "beginner"
+          difficulty: "beginner" as const
         }
       ];
       setPhrases(phraseList);

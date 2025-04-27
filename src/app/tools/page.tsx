@@ -11,8 +11,11 @@ import TranslationHistoryPanel from '@/components/learning/TranslationHistoryPan
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
 
+// Redefine Feature type locally to avoid import error
+type Feature = 'translator' | 'grammar' | 'dictionary' | 'summarizer' | 'paraphraser' | 'history' | 'learning' | 'progress' | 'flashcards' | 'quiz' | 'vocabulary' | 'pronunciation' | 'lessons' | 'notebook';
+
 export default function ToolsPage() {
-  const [activeFeature, setActiveFeature] = useState('translator');
+  const [activeFeature, setActiveFeature] = useState<Feature>('translator');
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {

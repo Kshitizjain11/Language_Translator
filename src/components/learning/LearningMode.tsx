@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FaFire, FaCheck, FaStar, FaTrophy } from 'react-icons/fa'
 import WordOfTheDay from './WordOfTheDay'
-import StreakTracker from './StreakTracker'
 import ContextLearning from './ContextLearning'
 import ReviewWords from './ReviewWords'
+import { Language } from './LanguageSelector'
 
 interface Word {
   id: string
@@ -14,7 +14,7 @@ interface Word {
   meaning: string
   pronunciation: string
   example: string
-  date: Date
+  date: string
   learned: boolean
 }
 
@@ -73,6 +73,9 @@ const LearningMode = () => {
     }
   }
 
+  // Add a fallback selectedLanguage and pass it to ContextLearning and WordOfTheDay
+  const selectedLanguage: Language = { code: 'es', name: 'Spanish', flag: '🇪🇸' }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -81,7 +84,8 @@ const LearningMode = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Learning Mode
           </h1>
-          <StreakTracker streak={streak} />
+          {/* Remove StreakTracker from header, as it expects selectedLanguage prop */}
+          {/* <StreakTracker streak={streak} /> */}
         </div>
 
         {/* Celebration Animation */}
@@ -110,12 +114,12 @@ const LearningMode = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Word of the Day */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <WordOfTheDay onWordLearned={handleWordLearned} />
+            <WordOfTheDay onWordLearned={handleWordLearned} selectedLanguage={selectedLanguage} onSaveToNotebook={() => {}} />
           </div>
 
           {/* Context Learning */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <ContextLearning />
+            <ContextLearning selectedLanguage={selectedLanguage} />
           </div>
         </div>
 

@@ -10,7 +10,7 @@ interface Word {
   meaning: string
   pronunciation: string
   example: string
-  date: Date
+  date: string
   learned: boolean
 }
 
@@ -26,7 +26,7 @@ const demoWords: Word[] = [
     meaning: 'Hola',
     pronunciation: 'heh-loh',
     example: 'Hello! How are you? / ¡Hola! ¿Cómo estás?',
-    date: new Date(),
+    date: new Date().toISOString(),
     learned: false,
   },
   {
@@ -35,7 +35,7 @@ const demoWords: Word[] = [
     meaning: 'Gracias',
     pronunciation: 'thangk-yoo',
     example: 'Thank you for your help. / Gracias por tu ayuda.',
-    date: new Date(),
+    date: new Date().toISOString(),
     learned: false,
   },
   {
@@ -44,7 +44,7 @@ const demoWords: Word[] = [
     meaning: 'Perro',
     pronunciation: 'dog',
     example: 'The dog is friendly. / El perro es amigable.',
-    date: new Date(),
+    date: new Date().toISOString(),
     learned: false,
   },
   {
@@ -53,7 +53,7 @@ const demoWords: Word[] = [
     meaning: 'Manzana',
     pronunciation: 'ap-uhl',
     example: 'I eat an apple every day. / Como una manzana cada día.',
-    date: new Date(),
+    date: new Date().toISOString(),
     learned: false,
   },
   {
@@ -62,7 +62,7 @@ const demoWords: Word[] = [
     meaning: 'Buenas noches',
     pronunciation: 'good-nait',
     example: 'Good night and sweet dreams! / ¡Buenas noches y dulces sueños!',
-    date: new Date(),
+    date: new Date().toISOString(),
     learned: false,
   }
 ];
